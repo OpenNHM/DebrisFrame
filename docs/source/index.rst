@@ -10,6 +10,19 @@ Welcome to DebrisFrame's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+General
+=======
+
+.. only:: html
+
+    * :doc:`PSNotes`
+
+.. toctree::
+   :maxdepth: 4
+   :hidden:
+   :caption: General
+
+   PSNotes.rst
 
 
 Indices and tables
@@ -18,3 +31,5 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+
+
