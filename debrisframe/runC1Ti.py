@@ -15,7 +15,7 @@ from avaframe.in3Utils import fileHandlerUtils as fU
 
 # import computation modules
 #from debrisframe.como1Debris import como1Debris
-from como1Debris import como1Debris
+from c1Ti import c1Ti
 
 
 
@@ -58,10 +58,10 @@ def runDebrisFlow(debrisDir=""):
     initProj.cleanSingleAvaDir(debrisDir, deleteOutput=False)
 
     # load debris flow config
-    DebrisCfg = cfgUtils.getModuleConfig(como1Debris)
+    DebrisCfg = cfgUtils.getModuleConfig(c1Ti)
 
     # perform com1DFA simulation with debris flow settings
-    _, plotDict, reportDictList, _ = como1Debris.runDebris(cfgMain, DebrisCfg)
+    _, plotDict, reportDictList, _ = c1Ti.runDebris(cfgMain, DebrisCfg)
 
     # Get peakfiles to return to QGIS
     debrisDir = pathlib.Path(debrisDir)
