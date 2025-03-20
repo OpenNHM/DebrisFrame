@@ -16,7 +16,7 @@ from avaframe.com1DFA import com1DFA
 log = logging.getLogger(__name__)
 
 
-def runDebris(cfgMain, debrisCfg):
+def c1TiMain(cfgMain, debrisCfg):
     """Run and adjust parameters to match debris flow settings for com1DFA run,
     result files, reports and plots are saved analog to a standard com1DFA model run
 

@@ -19,7 +19,7 @@ from c1Ti import c1Ti
 
 
 
-def runDebrisFlow(debrisDir=""):
+def runC1Ti(debrisDir=""):
     """Run com1DFA with debris flow parameters with only an avalanche/ debris flow directory as input
 
     Parameters
@@ -61,7 +61,7 @@ def runDebrisFlow(debrisDir=""):
     DebrisCfg = cfgUtils.getModuleConfig(c1Ti)
 
     # perform com1DFA simulation with debris flow settings
-    _, plotDict, reportDictList, _ = c1Ti.runDebris(cfgMain, DebrisCfg)
+    _, plotDict, reportDictList, _ = c1Ti.c1TiMain(cfgMain, DebrisCfg)
 
     # Get peakfiles to return to QGIS
     debrisDir = pathlib.Path(debrisDir)
@@ -82,4 +82,4 @@ if __name__ == "__main__":
     )
     print(parser)
     args = parser.parse_args()
-    runDebrisFlow(str(args.debrisdir))
+    runC1Ti(str(args.debrisdir))
