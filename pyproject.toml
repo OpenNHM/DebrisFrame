@@ -1,0 +1,7 @@
+[tool.flake8]
+max-line-length = 109
+select = ['B950']
+extend-ignore = ['E203', 'E501']
+
+[tool.black]
+line-length = 109
