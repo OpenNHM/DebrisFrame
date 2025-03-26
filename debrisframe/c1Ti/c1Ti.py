@@ -43,7 +43,9 @@ def c1TiMain(cfgMain, debrisCfg):
     )
 
     # run the com1DFA module with debris flow settings
-    dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(cfgMain, cfgInfo=com1DFACfg)
+    dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(
+        cfgMain, cfgInfo=com1DFACfg
+    )
 
     # print info about simulation performed to log
     log.info("Com1DFA run performed with debris flow settings")

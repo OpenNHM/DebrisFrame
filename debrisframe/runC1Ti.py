@@ -14,9 +14,8 @@ import avaframe.in3Utils.initializeProject as initProj
 from avaframe.in3Utils import fileHandlerUtils as fU
 
 # import computation modules
-#from debrisframe.como1Debris import como1Debris
+# from debrisframe.como1Debris import como1Debris
 from c1Ti import c1Ti
-
 
 
 def runC1Ti(debrisDir=""):
@@ -41,10 +40,10 @@ def runC1Ti(debrisDir=""):
     # Load debris flow directory from general configuration file
     # More information about the configuration can be found here
     # on the Configuration page in the documentation
-    cfgMain = cfgUtils.getGeneralConfig(nameFile=pathlib.Path('debrisframeCfg.ini'))
+    cfgMain = cfgUtils.getGeneralConfig(nameFile=pathlib.Path("debrisframeCfg.ini"))
     if debrisDir != "":
         cfgMain["MAIN"]["avalancheDir"] = debrisDir
-        #TODO: change avalancheDir to debrisDir
+        # TODO: change avalancheDir to debrisDir
     else:
         debrisDir = cfgMain["MAIN"]["avalancheDir"]
 
@@ -78,7 +77,12 @@ def runC1Ti(debrisDir=""):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run debris flow workflow")
     parser.add_argument(
-        "debrisdir", metavar="debrisdir", type=str, nargs="?", default="", help="the avalanche/ debris directory"
+        "debrisdir",
+        metavar="debrisdir",
+        type=str,
+        nargs="?",
+        default="",
+        help="the avalanche/ debris directory",
     )
     print(parser)
     args = parser.parse_args()
