@@ -1,5 +1,5 @@
 """
-    Pytest for module com6RockAvalanche
+    Pytest for module c1Ti
 """
 
 #  Load modules
@@ -8,7 +8,7 @@ import pathlib
 import shutil
 import pytest
 
-from avaframe.com6RockAvalanche import com6RockAvalanche
+from debrisframe.c1Ti import c1Ti
 
 from avaframe.in3Utils import cfgUtils
 

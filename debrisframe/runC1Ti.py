@@ -14,7 +14,7 @@ import avaframe.in3Utils.initializeProject as initProj
 from avaframe.in3Utils import fileHandlerUtils as fU
 
 # import computation modules
-# from debrisframe.como1Debris import como1Debris
+# from debrisframe.c1Ti import c1Ti
 from c1Ti import c1Ti
 
 
