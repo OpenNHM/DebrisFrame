@@ -50,4 +50,6 @@ def c1TiMain(cfgMain, debrisCfg):
     # print info about simulation performed to log
     log.info("Com1DFA run performed with debris flow settings")
 
+    test = {"a": 1, "b":2,"c":3}
+
     return dem, plotDict, reportDictList, simDF
