@@ -19,11 +19,8 @@ To create a release (with github):
 from setuptools import Extension, setup, find_packages
 from pathlib import Path
 import sys
-import numpy
-sys.path.append(str(Path(__file__).parent))
-#from avaframe.version import getVersion
 
-#from Cython.Build import cythonize
+sys.path.append(str(Path(__file__).parent))
 
 DISTNAME = "debrisframe"
 LICENSE = "EUPL"
@@ -47,62 +44,12 @@ CLASSIFIERS = [
 
 DESCRIPTION = "The Open Debris flow Framework"
 
-req_packages = [
-    "numpy",
-    "matplotlib",
-    "pyshp",
-    "scipy",
-    "cmcrameri",
-    "seaborn",
-    #"cython",
-    "pandas",
-    "shapely",
-    "configUpdater",
-    "tabulate",
-    "deepdiff",
-    "deepmerge",
-    "psutil",
-    # Next ones are for geotiff:
-    "rasterio",
-    "contextily",
-    "geopandas",
-    # For geopackage, TODO might not be needed
-    "fiona",
-    #"avaframe"
-]
+req_packages = ["avaframe"]
 
 
 # read the contents of your README file
 this_directory = Path(__file__).parent
 long_description = (this_directory / "README.md").read_text()
-
-# Cython part
-#setup_options = {}
-#print("Package is built with cythonization.")
-#setup_options = {"build_ext": {"inplace": True}}
-
-#ext = ".pyx"
-
-
-#extensions = [
-#    Extension(
-        #  "avaframe.com1DFA.DFAfunctionsCython",
-#         ["avaframe/com1DFA/DFAfunctionsCython" + ext],
-#         include_dirs=[numpy.get_include()],
-#     ),
-#     Extension(
-#         "avaframe.com1DFA.damCom1DFA",
-#         ["avaframe/com1DFA/damCom1DFA" + ext],
-#         include_dirs=[numpy.get_include()],
-#     ),
-#     Extension(
-#         "avaframe.com1DFA.DFAToolsCython",
-#         ["avaframe/com1DFA/DFAToolsCython" + ext],
-#         include_dirs=[numpy.get_include()],
-#     ),
-# ]
-
-#extensions = cythonize(extensions, compiler_directives={"linetrace": True}, language_level=3)
 
 setup(
     # Project info
@@ -110,8 +57,7 @@ setup(
     description=DESCRIPTION,
     long_description=long_description,
     long_description_content_type="text/markdown",
-    #version=getVersion(),
-
+    # version=getVersion(),
     # The project's main homepage.
     url=URL,
     # Author details
@@ -131,9 +77,9 @@ setup(
     # additional groups of dependencies here (e.g. development dependencies).
     extras_require={},
     # Run build_ext
-    #options=setup_options,
+    # options=setup_options,
     # Executable scripts
     entry_points={},
     zip_safe=False,
-    #ext_modules=extensions,
+    # ext_modules=extensions,
 )
