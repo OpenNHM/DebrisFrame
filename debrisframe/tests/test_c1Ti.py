@@ -12,7 +12,6 @@ from debrisframe.c1Ti import c1Ti
 
 from avaframe.in3Utils import cfgUtils
 
-@pytest.mark.skip(reason="Fails on github for nonobvious reasons, disabling it for now")
 def test_runC1Ti(tmp_path):
     """Check that runCom1DFA produces the good outputs"""
 
