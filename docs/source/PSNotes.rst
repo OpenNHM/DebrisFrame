@@ -1,21 +1,38 @@
-Install DebrisFrame
+Install DebrisFrame (Linux)
 ------------------------------
+  
+Running DebrisFrame means running AvaFrame's com1DFA with parameters for debris flow:
 
-Run DebrisFrame -> AvaFrame's com1DFA with parameters for debris flow:
+Create a new `conda environment <https://docs.conda.io/projects/conda/en/latest/user-guide/concepts/environments.html>`_ for DebrisFrame, activate it and install pip, numpy and cython in this environment::
 
-Install AvaFrame as described in the `Avaframe documentation <https://docs.avaframe.org/en/latest/developinstall.html#advanced-installation-linux>`_ 
 
-Clone the DebrisFrame repository (in the same directory, where the Avaframe folder is: [YOURDIR]) and change into it::
+  conda create --name debrisframe_env
+  conda activate debrisframe_env
+  conda install pip numpy cython
+
+
+Clone the DebrisFrame repository (in a directory of your choice: [YOURDIR]) and change into it::
+
 
   cd [YOURDIR]
   git clone https://github.com/OpenNHM/DebrisFrame.git
   cd DebrisFrame
 
-- try a first run:
+
+Install debrisframe and its requirements by either doing::
+
+
+  pip install -e .
+
+
+Try a first run:
 
 change into your ``debrisframe`` directory (replace [YOURDIR] with your path from the installation steps)::
 
+
   cd [YOURDIR]/DebrisFrame/debrisframe
   python runComo1Debris.py
+
+
   
 

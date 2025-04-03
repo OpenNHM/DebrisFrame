@@ -14,7 +14,7 @@ import avaframe.in3Utils.initializeProject as initProj
 from avaframe.in3Utils import fileHandlerUtils as fU
 
 # import computation modules
-# from debrisframe.como1Debris import como1Debris
+# from debrisframe.c1Ti import c1Ti
 from c1Ti import c1Ti
 
 
@@ -35,7 +35,7 @@ def runC1Ti(debrisDir=""):
     startTime = time.time()
 
     # log file name; leave empty to use default runLog.log
-    logName = "runComo1Debris"
+    logName = "runC1Ti"
 
     # Load debris flow directory from general configuration file
     # More information about the configuration can be found here
