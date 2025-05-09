@@ -1,3 +1,35 @@
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+ 
+[project]
+name = "debrisframe"
+description = "The Open Debris flow Framework"
+readme = "README.md"
+dynamic = ["version"]
+license = { text = "EUPL" }
+authors = [
+    { name = "AvaFrame Contributors", email = "felix@avaframe.org" }
+]
+urls = { Homepage = "http://debrisframe.org" }
+classifiers = [
+    # How mature is this project? Common values are
+    # 3 - Alpha  4 - Beta  5 - Production/Stable
+    "Development Status :: 5 - Production/Stable",
+    # Indicate who your project is intended for
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: European Union Public Licence 1.2 (EUPL 1.2)",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+requires-python = ">=3.8"
+dependencies = [
+]
+ 
 [tool.flake8]
 max-line-length = 109
 select = ['B950']
@@ -5,3 +37,38 @@ extend-ignore = ['E203', 'E501']
 
 [tool.black]
 line-length = 109
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.version.raw-options]
+version_scheme = "no-guess-dev"
+local_scheme = "node-and-date"
+
+[tool.pixi.workspace]
+channels = ["conda-forge/label/qgis_ltr", "https://prefix.dev/conda-forge"]
+platforms = ["linux-64", "win-64", "osx-64"]
+
+[tool.pixi.dependencies]
+pytest = "*"
+setuptools = "*"
+
+[tool.pixi.pypi-dependencies]
+#debrisframe = { path = "./", editable = true }
+# debrisframe = "==1.11"
+
+[tool.pixi.feature.dev.pypi-dependencies]
+debrisframe = { path = "./", editable = true }
+avaframe = { path = "../AvaFrame", editable = true }
+
+#[tool.pixi.feature.prod.pypi-dependencies]
+#debrisframe = "*"
+
+#[tool.pixi.feature.qgis.dependencies]
+# qgis = "*"
+
+[tool.pixi.environments]
+default = { features = ["dev"], solve-group = "default" }
+dev = ["dev"]
+#prod = ["prod"]
+#qgis = ["qgis", "dev"]

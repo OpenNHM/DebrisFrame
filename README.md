@@ -5,13 +5,7 @@ Install DebrisFrame (Linux)
 
 Running DebrisFrame means running AvaFrame's com1DFA with parameters for debris flow:
 
-Create a new [conda environment](https://docs.conda.io/projects/conda/en/latest/user-guide/concepts/environments.html) for DebrisFrame, activate it and install pip, numpy and cython in this environment:
-
-```
-  conda create --name debrisframe_env
-  conda activate debrisframe_env
-  conda install pip numpy cython
-```
+Install [git](https://github.com/git-guides/install-git), python and [pixi](https://pixi.sh/latest/#installation).
 
 Clone the DebrisFrame repository (in a directory of your choice: [YOURDIR]) and change into it:
 
@@ -21,10 +15,10 @@ Clone the DebrisFrame repository (in a directory of your choice: [YOURDIR]) and 
   cd DebrisFrame
 ```
 
-Install debrisframe and its requirements by either doing:
+Run pixi:
 
 ```
-pip install -e .
+pixi shell
 ```
 
 Try a first run:
