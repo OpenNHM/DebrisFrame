@@ -9,13 +9,13 @@ readme = "README.md"
 dynamic = ["version"]
 license = { text = "EUPL" }
 authors = [
-    { name = "AvaFrame Contributors", email = "felix@avaframe.org" }
+    { name = "DebrisFrame Contributors", email = "felix@avaframe.org" }
 ]
 urls = { Homepage = "http://debrisframe.org" }
 classifiers = [
     # How mature is this project? Common values are
     # 3 - Alpha  4 - Beta  5 - Production/Stable
-    "Development Status :: 5 - Production/Stable",
+    "Development Status :: 3 - Alpha",
     # Indicate who your project is intended for
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: European Union Public Licence 1.2 (EUPL 1.2)",
@@ -53,22 +53,22 @@ platforms = ["linux-64", "win-64", "osx-64"]
 pytest = "*"
 setuptools = "*"
 
-[tool.pixi.pypi-dependencies]
-#debrisframe = { path = "./", editable = true }
-# debrisframe = "==1.11"
+#Feature doc
+[tool.pixi.feature.doc.dependencies]
+sphinx = "*"
+sphinx-rtd-theme = "*"
+sphinxcontrib-bibtex = "*"
+
+# Feature dev
+[tool.pixi.feature.dev.dependencies]
+pixi-pycharm = "*"
 
 [tool.pixi.feature.dev.pypi-dependencies]
 debrisframe = { path = "./", editable = true }
 avaframe = { path = "../AvaFrame", editable = true }
 
-#[tool.pixi.feature.prod.pypi-dependencies]
-#debrisframe = "*"
-
-#[tool.pixi.feature.qgis.dependencies]
-# qgis = "*"
-
+# Environments
 [tool.pixi.environments]
 default = { features = ["dev"], solve-group = "default" }
 dev = ["dev"]
-#prod = ["prod"]
-#qgis = ["qgis", "dev"]
+doc = ["doc", "dev"]

@@ -15,14 +15,14 @@ General
 
 .. only:: html
 
-    * :doc:`PSNotes`
+    * :doc:`installation`
 
 .. toctree::
    :maxdepth: 4
    :hidden:
    :caption: General
 
-   PSNotes.rst
+   installation.rst
 
 
 Indices and tables

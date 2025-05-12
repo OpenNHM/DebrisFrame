@@ -9,10 +9,11 @@ Install `git <https://github.com/git-guides/install-git>`_, python and `pixi <ht
 Setup DebrisFrame
 
 
-Clone the DebrisFrame repository (in a directory of your choice: [YOURDIR]) and change into it::
+Clone the AvaFrame and DebrisFrame repository (in a directory of your choice: [YOURDIR]) and change into the DebrisFrame repository::
 
 
   cd [YOURDIR]
+  git clone https://github.com/avaframe/AvaFrame.git
   git clone https://github.com/OpenNHM/DebrisFrame.git
   cd DebrisFrame
 
