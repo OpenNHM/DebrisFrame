@@ -31,5 +31,18 @@ templates_path = ["_templates"]
 
 html_theme = "sphinx_rtd_theme"
 
+html_theme_options = {
+    "logo_only": True,
+    "style_nav_header_background": "#343131",
+    # 'display_version': False,
+}
+# The name of an image file (relative to this directory) to place at the top
+# of the sidebar.
+html_logo = "_static/logo.png"
+
+
+# -- Options for LaTeX output ---------------------------------------------
+latex_logo = "_static/logo.png"
+
 # -- Options for EPUB output
 epub_show_urls = "footnote"
