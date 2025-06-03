@@ -3,8 +3,10 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to DebrisFrame's documentation!
+The Open Debris Flow Framework
 =======================================
+
+.. include:: introduction.rst
 
 .. toctree::
    :maxdepth: 2
@@ -15,6 +17,7 @@ General
 
 .. only:: html
 
+    * :doc:`introduction`
     * :doc:`installation`
 
 .. toctree::
@@ -22,6 +25,7 @@ General
    :hidden:
    :caption: General
 
+   introduction.rst
    installation.rst
 
 
