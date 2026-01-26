@@ -11,9 +11,8 @@ from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import cfgHandling
 from avaframe.com1DFA import com1DFA
 
-# create local logger
-# change log level in calling module to DEBUG to see log messages
-log = logging.getLogger(__name__)
+# create local logger under avaframe namespace to use its logging configuration
+log = logging.getLogger("avaframe.debrisframe.c1Ti")
 
 
 def c1TiMain(cfgMain, debrisCfg):
