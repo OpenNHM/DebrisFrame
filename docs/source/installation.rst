@@ -88,5 +88,20 @@ under ``DebrisFrame_Experimental``. See :ref:`workflow:Application via QGIS` for
 an overview of the available modules and how to run them.
 
 
-  
+
+**Run c2TopRunDF**
+
+
+The c2ToprunDF module executes the `pyTopRunDF <https://github.com/schidli/pyTopRunDF#>`_ tool,
+its documentation can be find `here <https://github.com/schidli/pyTopRunDF#>`_.
+To run c2TopRunDF, clone the current pyTopRunDF version first::
+
+  cd [YOURDIR]/DebrisFrame/debrisframe
+  git submodule update --init
+  cp debrisframeCfg.ini local_debrisframeCfg.ini
+
+and edit ``local_debrisframeCfg.ini`` with your favorite text editor and adjust the variable
+``avalancheDir`` for example to ``data/debrisTopRun``, then run::
+
+  python runC2ToprunDF.py
 
