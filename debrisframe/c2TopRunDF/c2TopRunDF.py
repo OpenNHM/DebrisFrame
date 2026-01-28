@@ -11,6 +11,9 @@ from debrisframe.c2TopRunDF.pyTopRunDFRepo.PlotResult import HillshadePlotter
 import avaframe.in1Data.getInput as gI
 import avaframe.in3Utils.initialiseDirs as iD
 
+# To get a reproduceable result, set the seed:
+# np.random.seed(42)
+
 # create local logger under avaframe namespace to use its logging configuration
 log = logging.getLogger("avaframe.debrisframe.c2TopRunDF")
 
