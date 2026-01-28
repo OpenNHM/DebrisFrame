@@ -5,8 +5,8 @@ import mmap
 from scipy.ndimage import convolve
 import matplotlib as mpl
 
-import debrisframe.c2TopRunDF.RandomSingleFlow as randomsfp
-from debrisframe.c2TopRunDF.PlotResult import HillshadePlotter
+import debrisframe.c2TopRunDF.pyTopRunDFRepo.RandomSingleFlow as randomsfp
+from debrisframe.c2TopRunDF.pyTopRunDFRepo.PlotResult import HillshadePlotter
 
 import avaframe.in1Data.getInput as gI
 import avaframe.in3Utils.initialiseDirs as iD
