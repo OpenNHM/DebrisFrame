@@ -10,7 +10,6 @@ from debrisframe.c2TopRunDF.PlotResult import HillshadePlotter
 
 import avaframe.in1Data.getInput as gI
 import avaframe.in3Utils.initialiseDirs as iD
-import avaframe.in2Trans.rasterUtils as rasterUtils
 
 # create local logger under avaframe namespace to use its logging configuration
 log = logging.getLogger("avaframe.debrisframe.c2TopRunDF")
@@ -46,29 +45,19 @@ def c2TopRunDFMain(cfgMain, cfgDebris):
 
     # Open the DEM file
     # Preprocess the DEM file if necessary
-    # processed_dem_file = preprocess_raster(dem_file)
-    processed_dem_file = dem_file
-    dem = rasterUtils.readRaster(processed_dem_file)
-    demHeader = dem["header"]
+    processed_dem_file = preprocess_raster(dem_file)
     dataset = rasterio.open(processed_dem_file)
-    band = np.flipud(dem["rasterData"])
-    nrows = demHeader["nrows"]
-    ncols = demHeader["ncols"]
-
-    gridsize = demHeader["cellsize"]
+    band = dataset.read(1)
+    gridsize = dataset.res[0]
     # Initialize variables
     simarea = volume ** (2 / 3) * coefficient
     perimeter = simarea / gridsize ** 2
-    col = int((xKoord - demHeader["xllcenter"]) / demHeader["cellsize"])
-    row = int(
-        (demHeader["yllcenter"] + demHeader["nrows"] * demHeader["cellsize"] - yKoord)
-        / demHeader["cellsize"]
-    )
+    row, col = dataset.index(xKoord, yKoord)
     band2 = np.copy(band)
     band3 = np.copy(band)
     band3.fill(0)
     area = 0
-    mcsmax = cfgDebris["GENERAL"].getfloat("mcsmax")
+    mcsmax = 500
 
     # Flowpath simulation
     for x in range(0, 100000):
@@ -80,12 +69,16 @@ def c2TopRunDFMain(cfgMain, cfgDebris):
             random_radius = (
                 3  # Define the radius for random starting points to be defined; Default: 3 gridsizes.
             )
-            row = np.random.randint(max(0, row - random_radius), min(nrows, row + random_radius))
-            col = np.random.randint(max(0, col - random_radius), min(ncols, col + random_radius))
+            row = np.random.randint(max(0, row - random_radius), min(dataset.height, row + random_radius))
+            col = np.random.randint(max(0, col - random_radius), min(dataset.width, col + random_radius))
             position = [row, col]
             band2.fill(0)
             mcs = 0
-            while mcs < mcsmax and position[0] <= nrows - 1 and position[1] <= ncols - 1:
+            while (
+                    mcs < mcsmax
+                    and position[0] <= dataset.height - 1
+                    and position[1] <= dataset.width - 1
+            ):
                 if position[0] > 0 and position[1] > 0:
                     if area >= perimeter:
                         break
@@ -104,7 +97,9 @@ def c2TopRunDFMain(cfgMain, cfgDebris):
                                     artificial_raster_height.read(1)[position[0], position[1]]
                                     * gridsize * decay_factor
                             )
-                        obj1 = randomsfp.MonteCarloSingleFlowPath(dem, band2, position, temp_height)
+                        obj1 = randomsfp.MonteCarloSingleFlowPath(
+                            dataset, band2, position, temp_height
+                        )
                         position = obj1.NextStartCell()
                         band2[position[0], position[1]] = True
                         band3[position[0], position[1]] += 1
@@ -156,18 +151,14 @@ def c2TopRunDFMain(cfgMain, cfgDebris):
         log.info("Deposition volume matches input volume.")
 
     # Save the output raster
-    output_raster_path = output_dir / "depo"
-    rasterUtils.writeResultToRaster(demHeader, band4, output_raster_path, flip=False, useCompression=False)
-    """
     out_meta = dataset.meta.copy()
     out_meta.update({"driver": "AAIGrid", "dtype": "float32"})
-    
+    output_raster_path = output_dir / "depo.asc"
     with rasterio.open(output_raster_path, "w", **out_meta) as dest:
         dest.write(band4, 1)
-    """
     # Clean up the temporary file if preprocessing was done
-    # if processed_dem_file != dem_file:
-    #    processed_dem_file.unlink()  # Deletes the temporary file
+    if processed_dem_file != dem_file:
+        processed_dem_file.unlink()  # Deletes the temporary file
     fin = "finished"
 
     if fin is None:
@@ -188,8 +179,6 @@ def initializeSimulation(avaDir):
     return outputDir, demFile
 
 
-# TODO: are these functions needed??
-'''
 # Funktion zum Testen ob unterschiedliche Dezimaltrennzeichen in den Rasterdaten vorliegen
 def needs_preprocessing(file_path):
     """Check if the file contains commas as decimal separators."""
@@ -220,7 +209,7 @@ def preprocess_raster(file_path):
         f_out.write(updated_content)
 
     return temp_file
-'''
+
 
 # Funktion zur Adaptierung unterschiedlicher Dezimaltrennzeichen für Eingabewerte
 def parse_decimal(input_string):
