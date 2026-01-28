@@ -1,3 +1,9 @@
+"""
+@author: Christian Scheidl
+
+(modified by Paula Spannring)
+"""
+
 import rasterio
 import numpy as np
 import logging
