@@ -6,11 +6,10 @@ Created on Thu Feb 20 13:11:54 2020
 """
 class MonteCarloSingleFlowPath():
 
-    def __init__(self, demDict, band2, position, temp_height, dataset):
+    def __init__(self, demDict, band2, position, temp_height):
         self.startrastercells=band2
         self.demRaster = demDict["rasterData"]
         self.demHeader = demDict["header"]
-        self.dem = dataset
         self.startcell=position
         self.artificalheight=temp_height
         # self.articficalrasterheight=band2
@@ -55,7 +54,7 @@ class MonteCarloSingleFlowPath():
         else:
             rightBound = False
         if upperBound==True :
-            diff1 = self.dem.read(1)[rowPosition, colPosition] - self.dem.read(1)[adjacentUpper, colPosition]
+            diff1 = self.demRaster[rowPosition, colPosition] - self.demRaster[adjacentUpper, colPosition]
             if (diff1+self.artificalheight)<=0: #or belowBound==False or leftBound==False or rightBound==False:
                 diff1=0
                 position1=[0,0]
@@ -69,7 +68,7 @@ class MonteCarloSingleFlowPath():
             diff1=0
             position1=[0,0]
         if rightBound==True :
-            diff2 = self.dem.read(1)[rowPosition, colPosition] - self.dem.read(1)[rowPosition, adjacentRight]
+            diff2 = self.demRaster[rowPosition, colPosition] - self.demRaster[rowPosition, adjacentRight]
             if (diff2+self.artificalheight)<=0: #or belowBound==False or leftBound==False or  rightBound==False:
                 diff2=0
                 position2=[0,0]
@@ -83,7 +82,7 @@ class MonteCarloSingleFlowPath():
             diff2=0
             position2=[0,0]
         if belowBound==True:
-            diff3 = self.dem.read(1)[rowPosition, colPosition] - self.dem.read(1)[adjacentBelow, colPosition]
+            diff3 = self.demRaster[rowPosition, colPosition] - self.demRaster[adjacentBelow, colPosition]
             if (diff3+self.artificalheight)<=0: #or belowBound==False or  leftBound==False or rightBound==False:
                 diff3=0
                 position3=[0,0]
@@ -97,7 +96,7 @@ class MonteCarloSingleFlowPath():
             diff3=0
             position3=[0,0]
         if leftBound==True :
-            diff4 = self.dem.read(1)[rowPosition, colPosition] - self.dem.read(1)[rowPosition, adjacentLeft]
+            diff4 = self.demRaster[rowPosition, colPosition] - self.demRaster[rowPosition, adjacentLeft]
             if (diff4+self.artificalheight)<=0: #or  belowBound==False or  leftBound==False or rightBound==False:
                 diff4=0
                 position4=[0,0]
