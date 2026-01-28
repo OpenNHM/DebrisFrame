@@ -50,3 +50,11 @@ and edit ``local_debrisframeCfg.ini`` with your favorite text editor and adjust 
 
   python runC2ToprunDF.py
 
+
+In comparison to `pyTopRunDF <https://github.com/schidli/pyTopRunDF#>`_,
+the Input DEM (as *.asc file) is in ``avalancheDir/Inputs`` (the ``avalancheDir`` is defined in ``local_debrisframeCfg.ini``).
+The input parameters are defined in ``c2TopRunDF/c2TopRunDFCfg.ini``. To change them first copy the file::
+
+  cp c2TopRunDF/c2TopRunDFCfg.ini c2TopRunDF/local_c2TopRunDFCfg.ini
+
+and change the parameters in ``c2TopRunDF/local_c2TopRunDFCfg.ini``.
