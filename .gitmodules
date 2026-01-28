@@ -1,0 +1,6 @@
+[submodule "pyTopRunDF"]
+	path = pyTopRunDF
+	url = https://github.com/schidli/pyTopRunDF.git
+[submodule "debrisframe/c2TopRunDF/pyTopRunDFRepo"]
+	path = debrisframe/c2TopRunDF/pyTopRunDFRepo
+	url = https://github.com/schidli/pyTopRunDF.git
