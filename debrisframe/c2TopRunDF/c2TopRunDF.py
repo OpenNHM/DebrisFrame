@@ -59,12 +59,11 @@ def c2TopRunDFMain(cfgMain, cfgDebris):
     # Initialize variables
     simarea = volume ** (2 / 3) * coefficient
     perimeter = simarea / gridsize ** 2
-    col = int((xKoord - demHeader["xllcenter"]) / demHeader["cellsize"] + 1)
+    col = int((xKoord - demHeader["xllcenter"]) / demHeader["cellsize"])
     row = int(
         (demHeader["yllcenter"] + demHeader["nrows"] * demHeader["cellsize"] - yKoord)
         / demHeader["cellsize"]
     )
-
     band2 = np.copy(band)
     band3 = np.copy(band)
     band3.fill(0)
@@ -105,7 +104,7 @@ def c2TopRunDFMain(cfgMain, cfgDebris):
                                     artificial_raster_height.read(1)[position[0], position[1]]
                                     * gridsize * decay_factor
                             )
-                        obj1 = randomsfp.MonteCarloSingleFlowPath(dem, band2, position, temp_height, dataset)
+                        obj1 = randomsfp.MonteCarloSingleFlowPath(dem, band2, position, temp_height)
                         position = obj1.NextStartCell()
                         band2[position[0], position[1]] = True
                         band3[position[0], position[1]] += 1
@@ -179,7 +178,7 @@ def c2TopRunDFMain(cfgMain, cfgDebris):
     plotter = HillshadePlotter()
 
     # Generate the plot
-    plotter.plot(f"{output_raster_path}.asc", dem_file, eventName, output_dir)
+    plotter.plot(output_raster_path, dem_file, eventName, output_dir)
 
 
 def initializeSimulation(avaDir):
