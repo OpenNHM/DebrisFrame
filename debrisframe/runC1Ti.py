@@ -40,7 +40,7 @@ def runC1Ti(debrisDir=""):
     # Load debris flow directory from general configuration file
     # More information about the configuration can be found here
     # on the Configuration page in the documentation
-    cfgMain = cfgUtils.getGeneralConfig(nameFile=pathlib.Path("local_debrisframeCfg.ini"))
+    cfgMain = cfgUtils.getGeneralConfig(nameFile=pathlib.Path("debrisframeCfg.ini"))
     if debrisDir != "":
         cfgMain["MAIN"]["avalancheDir"] = debrisDir
         # TODO: change avalancheDir to debrisDir
