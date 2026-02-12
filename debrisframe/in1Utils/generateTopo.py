@@ -20,6 +20,11 @@ def debrisFlowTopoAverage(cfg):
     Compute coordinates of an average parabolic-shaped slope as a generic topography for debris-flow simulations
     defined by a 2nd-degree polynomial: ax**2 + bx + c
     The parameters of the polynomial function are derived from real watershed profiles (Kessler 2019)
+    
+    Parameters
+    ----------------------
+    cfg: configparser Object
+        configuration setup for topo generation
     """
     # input parameters
     C = float(cfg["TOPO"]["C"]) # C = 709 m
@@ -98,7 +103,16 @@ def debrisFlowTopoAverage(cfg):
     return x, y, zv
 
 def generateTopo(cfg, avalancheDir):
-    """Compute coordinates of desired topography with given inputs"""
+    """  
+    Compute coordinates of desired topography with given inputs  
+        
+    Parameters  
+    ----------------------  
+    cfg: configparser Object  
+        configuration setup for topo generation  
+    debrisDir: string  
+        directory to data folder  
+    """ 
 
     # Which DEM type
     demType = cfg["TOPO"]["demType"]
