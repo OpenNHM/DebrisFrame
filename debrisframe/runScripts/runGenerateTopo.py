@@ -6,7 +6,7 @@ import pathlib
 
 # Local imports
 from debrisframe.in1Utils import generateTopo as gT
-from debrisframe.out1Plot import outTopo as oT
+from avaframe.out3Plot import outTopo as oT
 from avaframe.in3Utils import cfgUtils, logUtils
 
 if __name__ == '__main__':
