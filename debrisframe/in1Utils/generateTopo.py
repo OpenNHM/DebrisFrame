@@ -27,12 +27,12 @@ def debrisFlowTopoAverage(cfg):
         configuration setup for topo generation
     """
     # input parameters
-    C = float(cfg["TOPO"]["C"]) # C = 709 m
-    cff = float(cfg["CHANNELS"]["cff"])
-    cRadius = float(cfg["CHANNELS"]["cRadius"])
-    cInit = float(cfg["CHANNELS"]["cInit"])
-    cMustart = float(cfg["CHANNELS"]["cMustart"])
-    cMuend = float(cfg["CHANNELS"]["cMuend"])
+    C = cfg["TOPO"].getfloat("C") # C = 709 m
+    cff = cfg["CHANNELS"].getfloat("cff")
+    cRadius = cfg["CHANNELS"].getfloat("cRadius")
+    cInit = cfg["CHANNELS"].getfloat("cInit")
+    cMustart = cfg["CHANNELS"].getfloat("cMustart")
+    cMuend = cfg["CHANNELS"].getfloat("cMuend")
 
     # Get grid definitons
     dx, xEnd, yEnd = genTop.getGridDefs(cfg)
