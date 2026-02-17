@@ -22,12 +22,14 @@ if __name__ == '__main__':
     log.info('MAIN SCRIPT')
 
     # Load default input parameters from configuration file and update with override parameters
-    debrisCfg = cfgUtils.getModuleConfig(gT)
-    cfg = cfgUtils.getModuleConfig(generateTopo,onlyDefault=debrisCfg["in3Utils_generateTopo_override"].getboolean("defaultConfig"))
-    cfg, debrisCfg = cfgHandling.applyCfgOverride(cfg, debrisCfg, generateTopo, addModValues=False)
+    debGenTopoCfg = cfgUtils.getModuleConfig(gT)
+    defaultCfg = cfgUtils.getModuleConfig(
+        generateTopo, onlyDefault=debGenTopoCfg["in3Utils_generateTopo_override"].getboolean("defaultConfig")
+    )
+    defaultCfg, debrisCfg = cfgHandling.applyCfgOverride(defaultCfg, debGenTopoCfg, generateTopo, addModValues=False)
 
     # Call main function to generate DEMs
-    [z, name_ext, outDir] = gT.generateTopo(cfg, debrisDir)
+    [z, name_ext, outDir] = gT.generateTopo(defaultCfg, debrisDir)
 
     # Plot new topogrpahy
-    oT.plotGeneratedDEM(z, name_ext, cfg, outDir, cfgMain)
+    oT.plotGeneratedDEM(z, name_ext, defaultCfg, outDir, cfgMain)
