@@ -27,7 +27,7 @@ def debrisFlowTopoAverage(cfg):
         configuration setup for topo generation
     """
     # input parameters
-    C = cfg["TOPO"].getfloat("C") # C = 709 m
+    C = cfg["TOPO"].getfloat("C")
     cff = cfg["CHANNELS"].getfloat("cff")
     cRadius = cfg["CHANNELS"].getfloat("cRadius")
     cInit = cfg["CHANNELS"].getfloat("cInit")
@@ -42,7 +42,7 @@ def debrisFlowTopoAverage(cfg):
 
     # If a channel shall be introduced
     # Get parabola Parameters
-    [A, B, fLen] = genTop.getParabolaParams(cfg) # fLen = x0 = 1679 m
+    [A, B, fLen] = genTop.getParabolaParams(cfg)
 
     # Set surface elevation
     mask = np.zeros(np.shape(xv))
@@ -54,7 +54,7 @@ def debrisFlowTopoAverage(cfg):
         # Compute cumulative distribution function - c1 for upper part (start)
         # of channel and c2 for lower part (end) of channel
         c1 = norm.cdf(xv, cMustart * fLen, cff)
-        c2 = 1.0 - norm.cdf(xv, cMuend * fLen, cff) # cMuend = 0.62, cff = 120
+        c2 = 1.0 - norm.cdf(xv, cMuend * fLen, cff)
 
         # combine both into one function separated at the the middle of
         #  the channel longprofile location
@@ -102,7 +102,7 @@ def debrisFlowTopoAverage(cfg):
 
     return x, y, zv
 
-def generateTopo(cfg, avalancheDir):
+def generateTopo(cfg, debrisDir):
     """  
     Compute coordinates of desired topography with given inputs  
         
@@ -120,12 +120,12 @@ def generateTopo(cfg, avalancheDir):
     log.info("DEM type is set to: %s" % demType)
 
     # Set Output directory
-    outDir = pathlib.Path(avalancheDir, "Inputs")
+    outDir = pathlib.Path(debrisDir, "Inputs")
     if outDir.is_dir():
         log.info("The new DEM is saved to %s" % (outDir))
     else:
         log.error(
-            "Required folder structure: NameOfAvalanche/Inputs missing! \
+            "Required folder structure: NameOfDebrisFlow/Inputs missing! \
                     Run runInitializeProject first!"
         )
 
