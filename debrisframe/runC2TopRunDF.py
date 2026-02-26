@@ -8,7 +8,7 @@ from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 import avaframe.in3Utils.initializeProject as initProj
 
-from c2TopRunDF import c2TopRunDF
+from debrisframe.c2TopRunDF import c2TopRunDF
 
 def runC2TopRunDF(debrisDir=""):
 
