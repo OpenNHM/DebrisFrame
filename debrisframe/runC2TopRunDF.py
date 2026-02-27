@@ -8,6 +8,7 @@ from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 import avaframe.in3Utils.initializeProject as initProj
 
+import debrisframe as debf
 from debrisframe.c2TopRunDF import c2TopRunDF
 
 def runC2TopRunDF(debrisDir=""):
@@ -21,7 +22,9 @@ def runC2TopRunDF(debrisDir=""):
     # Load debris flow directory from general configuration file
     # More information about the configuration can be found here
     # on the Configuration page in the documentation
-    cfgMain = cfgUtils.getGeneralConfig(nameFile=pathlib.Path("debrisframeCfg.ini"))
+    modPath = pathlib.Path(debf.__file__).resolve().parent
+    cfgNameFile = modPath / "debrisframeCfg.ini"
+    cfgMain = cfgUtils.getGeneralConfig(nameFile=cfgNameFile)
     if debrisDir != "":
         cfgMain["MAIN"]["avalancheDir"] = debrisDir
         # TODO: change avalancheDir to debrisDir
