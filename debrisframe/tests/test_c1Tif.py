@@ -1,5 +1,5 @@
 """
-    Pytest for module c1Ti
+Pytest for module c1Tif
 """
 
 #  Load modules
@@ -8,16 +8,17 @@ import pathlib
 import shutil
 import pytest
 
-from debrisframe.c1Ti import c1Ti
+from debrisframe.c1Tif import c1Tif
 
 from avaframe.in3Utils import cfgUtils
 
-def test_runC1Ti(tmp_path):
+
+def test_runC1Tif(tmp_path):
     """Check that runCom1DFA produces the good outputs"""
 
     testDir = pathlib.Path(__file__).parents[0]
-    inputDir = testDir / "data" / "testC1Ti"
-    avaDir = pathlib.Path(tmp_path, "testC1Ti")
+    inputDir = testDir / "data" / "testC1Tif"
+    avaDir = pathlib.Path(tmp_path, "testC1Tif")
     shutil.copytree(inputDir, avaDir)
 
     cfgMain = configparser.ConfigParser()
@@ -30,13 +31,13 @@ def test_runC1Ti(tmp_path):
         "debugPlot": "False",
     }
     # modCfg, modInfo = cfgUtils.getModuleConfig(com1DFA, fileOverride=cfgFile, modInfo=True)
-    modCfg, modInfo = cfgUtils.getModuleConfig(c1Ti, modInfo=True)
+    modCfg, modInfo = cfgUtils.getModuleConfig(c1Tif, modInfo=True)
 
     modCfg['com1DFA_com1DFA_override']['rho'] = '1000'
     modCfg['com1DFA_com1DFA_override']['explicitFriction'] = '0'
     modCfg['com1DFA_com1DFA_override']['frictModel'] = 'Voellmy'
 
-    dem, plotDict, reportDictList, simDF = c1Ti.c1TiMain(cfgMain, modCfg)
+    dem, plotDict, reportDictList, simDF = c1Tif.c1TifMain(cfgMain, modCfg)
 
     outDir = avaDir / "Outputs" / "com1DFA"
     for ext in ["pft", "pfv", "ppr"]:

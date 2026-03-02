@@ -12,10 +12,10 @@ from avaframe.in3Utils import cfgHandling
 from avaframe.com1DFA import com1DFA
 
 # create local logger under avaframe namespace to use its logging configuration
-log = logging.getLogger("avaframe.debrisframe.c1Ti")
+log = logging.getLogger("avaframe.debrisframe.c1Tif")
 
 
-def c1TiMain(cfgMain, debrisCfg):
+def c1TifMain(cfgMain, debrisCfg):
     """Run and adjust parameters to match debris flow settings for com1DFA run,
     result files, reports and plots are saved analog to a standard com1DFA model run
 
