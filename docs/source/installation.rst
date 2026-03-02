@@ -30,7 +30,7 @@ change into your ``debrisframe`` directory (replace [YOURDIR] with your path fro
 
 
   cd [YOURDIR]/DebrisFrame/debrisframe
-  python runC1Ti.py
+  python runC1Tif.py
 
 
   
