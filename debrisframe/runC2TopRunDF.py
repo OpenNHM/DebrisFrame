@@ -11,7 +11,7 @@ import avaframe.in3Utils.initializeProject as initProj
 import debrisframe as debf
 from debrisframe.c2TopRunDF import c2TopRunDF
 
-def runC2TopRunDF(debrisDir=""):
+def runC2TopRunDF(debrisDir="", xCoordRel=None, yCoordRel=None):
 
     # Time the whole routine
     startTime = time.time()
@@ -38,6 +38,13 @@ def runC2TopRunDF(debrisDir=""):
 
     initProj.cleanSingleAvaDir(debrisDir, deleteOutput=False)
     DebrisCfg = cfgUtils.getModuleConfig(c2TopRunDF)
+
+    # get release coordinates if provided from a point
+    if xCoordRel is not None:
+        DebrisCfg["GENERAL"]["xKoord"] = xCoordRel
+    if yCoordRel is not None:
+        DebrisCfg["GENERAL"]["yKoord"] = yCoordRel
+
     c2TopRunDF.c2TopRunDFMain(cfgMain, DebrisCfg)
 
     endTime = time.time()
@@ -54,5 +61,17 @@ if __name__ == "__main__":
         default="",
         help="the debris directory",
     )
+    parser.add_argument(
+        "-x",
+        "--release_Xcoordinate",
+        type=str,
+        help="x coordinate of release point" + "Overrides default AND local configs",
+    )
+    parser.add_argument(
+        "-y",
+        "--release_Ycoordinate",
+        type=str,
+        help="y coordinate of release point" + "Overrides default AND local configs",
+    )
     args = parser.parse_args()
-    runC2TopRunDF(str(args.debrisdir))
+    runC2TopRunDF(str(args.debrisdir), args.release_Xcoordinate, args.release_Ycoordinate)
