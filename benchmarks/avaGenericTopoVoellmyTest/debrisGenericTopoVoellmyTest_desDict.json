@@ -1,0 +1,52 @@
+{
+  "TAGS": [
+    "null",
+    "standardTest",
+    "idealized"
+  ],
+  "DESCRIPTION": " this is my null test",
+  "TYPE": [
+    "2DPeak"
+  ],
+  "FILES": [
+    "releaseGenericTopo_7d89c1a8cf_com1_C_L_null_dfa_FM",
+    "releaseGenericTopo_7d89c1a8cf_com1_C_L_null_dfa_FT",
+    "releaseGenericTopo_7d89c1a8cf_com1_C_L_null_dfa_pft",
+    "releaseGenericTopo_7d89c1a8cf_com1_C_L_null_dfa_ppr",
+    "releaseGenericTopo_7d89c1a8cf_com1_C_L_null_dfa_pfv",
+    "mass_releaseGenericTopo_7d89c1a8cf_com1_C_L_null_dfa"
+  ],
+  "AVANAME": "debrisGenericTopoVoellmyTest",
+  "AVADIR": "data/debrisGenericTopo",
+  "simNameRef": "releaseGenericTopo_7d89c1a8cf_com1_C_L_null_dfa",
+  "NAME": "debrisGenericTopoVoellmyTest",
+  "Test Info": {
+    "type": "text",
+    "Test Info": "This test uses a generic debris-flow topography."
+  },
+  "simType": "null",
+  "simName": {
+    "type": "simName",
+    "name": "releaseGenericTopo_7d89c1a8cf_com1_C_L_null_dfa"
+  },
+  "Simulation Parameters": {
+    "type": "list",
+    "Program version": "2.0rc3+4.gc3fb94b9",
+    "Parameter set": "Changed",
+    "Release Area Scenario": "releaseGenericTopo",
+    "Entrainment": "No",
+    "Resistance": "No",
+    "Secondary release area": "No",
+    "Density [kgm-3]": "2000",
+    "Friction model": "Voellmy",
+    "Initial mass [kg]": "19947731.98",
+    "Final mass [kg]": "19947731.98",
+    "Entrained mass [kg]": "0.00",
+    "Entrained volume [m3]": "0.00",
+    "Detrained mass [kg]": "0.00",
+    "Total initialized mass [kg]": "19947731.98",
+    "Stop criterion": "1.00 percent of PKE",
+    "Process run time [s]": "226.60",
+    "Computation time [s]": "30.26"
+  }
+}
