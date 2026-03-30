@@ -1,5 +1,5 @@
 """
-Run script for running the standard tests with c1Ti (debris flow module)
+Run script for running the standard tests with c1Tif (debris flow module)
 in this test all the available tests tagged standardTest are performed
 """
 
@@ -24,7 +24,7 @@ from avaframe.in3Utils import cfgHandling
 from avaframe.in3Utils import logUtils
 
 # DebrisFrame module
-from debrisframe.c1Ti import c1Ti
+from debrisframe.c1Tif import c1Tif
 
 
 def runSingleTest(
@@ -113,22 +113,22 @@ def runSingleTest(
     simType = benchDict["simType"]
     rel = benchDict["Simulation Parameters"]["Release Area Scenario"]
 
-    # Load c1Ti configuration for this benchmark test
-    # Convention: benchmark folder contains <AVANAME>_c1TiCfg.ini
-    standardCfg = refDir / ("%s_c1TiCfg.ini" % test["AVANAME"])
+    # Load c1Tif configuration for this benchmark test
+    # Convention: benchmark folder contains <AVANAME>_c1TifCfg.ini
+    standardCfg = refDir / ("%s_c1TifCfg.ini" % test["AVANAME"])
     modName = "com1DFA"
 
-    # Load c1Ti module config: use benchmark-specific override if present,
+    # Load c1Tif module config: use benchmark-specific override if present,
     # otherwise error message is raised
     if not standardCfg.is_file():
         raise FileNotFoundError(f'Benchmark config {standardCfg} not found')
     
-    debrisCfg = cfgUtils.getModuleConfig(c1Ti, fileOverride=standardCfg)
+    debrisCfg = cfgUtils.getModuleConfig(c1Tif, fileOverride=standardCfg)
 
     # Set timing
     startTime = time.time()
-    # call c1Ti run (debris flow simulation based on com1DFA)
-    dem, plotDict, reportDictList, simDF = c1Ti.c1TiMain(cfgMain, debrisCfg)
+    # call c1Tif run (debris flow simulation based on com1DFA)
+    dem, plotDict, reportDictList, simDF = c1Tif.c1TifMain(cfgMain, debrisCfg)
     endTime = time.time()
     timeNeeded = endTime - startTime
     log.info(("Took %s seconds to calculate." % (timeNeeded)))
@@ -173,7 +173,7 @@ def runSingleTest(
     cfgAimec["AIMECSETUP"]["comModules"] = aimecComModules
     cfgAimec["AIMECSETUP"]["testName"] = test["NAME"]
 
-    # Setup input from c1Ti/com1DFA and reference
+    # Setup input from c1Tif/com1DFA and reference
     pathDict = []
     inputsDF, pathDict = dfa2Aimec.dfaBench2Aimec(avaDir, cfgAimec, simNameRef, simNameComp)
     log.info("reference file comes from: %s" % pathDict["refSimName"])
@@ -235,7 +235,7 @@ def main():
     # ++++++++++++++++++++++++++++++
 
     # log file name; leave empty to use default runLog.log
-    logName = "runStandardTestsC1Ti"
+    logName = "runStandardTestsc1Tif"
 
     # Load settings from general configuration file
     cfgMain = cfgUtils.getGeneralConfig(nameFile=pathlib.Path("debrisframeCfg.ini"))
@@ -259,15 +259,15 @@ def main():
     tmpTestsDir.mkdir(parents=True, exist_ok=True)
 
     # Set directory for full standard test report
-    outDir = pathlib.Path.cwd() / "tests" / "reportsC1Ti"
+    outDir = pathlib.Path.cwd() / "tests" / "reportsc1Tif"
     fU.makeADir(outDir)
 
     # Start writing markdown style report for standard tests
-    reportFile = outDir / "standardTestsReportC1Ti.md"
+    reportFile = outDir / "standardTestsReportc1Tif.md"
     with open(reportFile, "w") as pfile:
         # Write header
         pfile.write("# Standard Tests Report \n")
-        pfile.write("## Compare c1Ti debris flow simulations to benchmark results \n")
+        pfile.write("## Compare c1Tif debris flow simulations to benchmark results \n")
 
     log = logUtils.initiateLogger(outDir, logName)
     log.info("The following benchmark tests will be fetched ")
