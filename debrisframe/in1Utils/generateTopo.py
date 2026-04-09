@@ -45,9 +45,10 @@ def debrisFlowTopoAverage(cfg):
     [A, B, fLen] = genTop.getParabolaParams(cfg)
 
     # Set surface elevation
+    zv = np.ones((nRows, nCols))
     mask = np.zeros(np.shape(xv))
     mask[np.where(xv < fLen)] = 1 
-    zv = (A * xv ** 2 + B * xv + C) * mask
+    zv = zv * (A * xv ** 2 + B * xv + C) * mask
 
     # If a channel shall be introduced
     if cfg["TOPO"].getboolean("channel"):
