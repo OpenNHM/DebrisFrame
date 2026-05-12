@@ -114,8 +114,189 @@ def getActRelVol(cfgMain,avaDir, cfgDebris, relThVal):
     
     return volumes
 
+def getDEMPath(avaDir):
+    """get the DEM file path from a provided avalanche directory
 
-def getGeomRelVol(avaDir,cfgDebris,relThval):
+    Parameters
+    ----------
+    avaDir : str
+        path to avalanche directory
+
+    Returns
+    -------
+    demFile : str (first element of list)
+        full path to DEM .asc/.tif file
+    """
+
+    # if more than one .asc / .tif file found throw error
+    inputDir = Path(avaDir, "Inputs", 'remeshedRasters')
+
+    if inputDir.is_dir():
+        demFile = list(inputDir.glob("*.tif")) + list(inputDir.glob("*.asc"))
+
+    else:
+        print('Warning: no remeshed topography available. Original topography is used')
+        inputDir = Path(avaDir, "Inputs", 'remeshedRasters')
+        demFile = list(inputDir.glob("*.tif")) + list(inputDir.glob("*.asc"))
+
+
+    if len(demFile) > 1:
+        message = "There should be exactly one topography .asc/.tif file in %s/Inputs/" % avaDir
+        raise AssertionError(message)
+
+    elif len(demFile) == 0:
+        message = "No topography .asc / .tif file in %s/Inputs/" % avaDir
+        raise FileNotFoundError(message)
+
+    return demFile[0]
+
+def getInputDataCom1DFA(avaDir):
+    """Fetch input datasets required for simulation, duplicated function because
+    now fetch all available files simulation type set differently in com1DFA compared
+    to com1DFAOrig: TODO: remove duplicate once it is not required anymore
+
+    Parameters
+    ----------
+    avaDir : str or pathlib object
+        path to avalanche directory
+
+    Returns
+    -------
+    inputSimFiles: dict
+        dictionary with all the input files
+
+        - demFile : str (first element of list), list of full path to DEM .asc file
+        - relFiles : list, list of full path to release area scenario .shp files
+        - secondaryReleaseFile : str, full path to secondary release area .shp file
+        - entFile : str, full path to entrainment area .shp file
+        - resFile : str, full path to resistance area .shp file
+        - entResInfo : flag dict
+        - timeDepRelCsv : str, full path to time dependent release values .csv file
+        flag if Yes entrainment and/or resistance areas found and used for simulation
+        flag True if a Secondary Release file found and activated
+
+    """
+
+    # Set directories for inputs, outputs and current work
+    inputDir = Path(avaDir, "Inputs")
+
+    # Set flag if there is an entrainment or resistance area
+    entResInfo = {}
+    releaseDir = inputDir / "REL"
+
+    relFiles = sorted(
+        list(releaseDir.glob("*.shp")) + list(releaseDir.glob("*.tif")) + list(releaseDir.glob("*.asc"))
+    )
+    relSuffixList = [relF.suffix for relF in relFiles]
+
+    if ".shp" in relSuffixList and (".asc" in relSuffixList or ".tif" in relSuffixList):
+        message = "Release area information - use either .shp or .asc/.tif files"
+        #log.error(message)
+        raise AssertionError(message)
+    #else:
+        #log.info("Release area files are: %s" % [str(relFilestr) for relFilestr in relFiles])
+    entResInfo["relThFileType"] = relFiles[0].suffix
+    entResInfo["flagRel"] = "Yes"
+
+    # Initialise secondary release areas
+    (
+        secondaryReleaseFile,
+        entResInfo["flagSecondaryRelease"],
+        entResInfo["secondaryRelThFileType"],
+    ) = gI.getAndCheckInputFiles(inputDir, "SECREL", "Secondary release", fileExt=["shp", "asc", "tif"])
+    #if secondaryReleaseFile:
+        #log.info("Secondary release file is: %s" % secondaryReleaseFile)
+
+    # Initialise resistance areas
+    resFile, entResInfo["flagRes"], entResInfo["resFileType"] = gI.getAndCheckInputFiles(
+        inputDir, "RES", "Resistance", fileExt=["shp", "asc", "tif"]
+    )
+    #if resFile:
+        #log.info("Resistance file is: %s" % resFile)
+
+    # Initialise entrainment areas
+    entFile, entResInfo["flagEnt"], entResInfo["entThFileType"] = gI.getAndCheckInputFiles(
+        inputDir, "ENT", "Entrainment", fileExt=["shp", "asc", "tif"]
+    )
+    #if entFile:
+        #log.info("Entrainment file is: %s" % entFile)
+
+    # Initialise dam line
+    damFile, entResInfo["dam"], _ = gI.getAndCheckInputFiles(inputDir, "DAM", "Dam", fileExt="shp")
+    #if damFile:
+        #log.info("Dam file is: %s" % damFile)
+
+    # Initialise DEM
+    demFile = getDEMPath(avaDir)
+
+    # check if mu frictionParameter  file  is available
+    muFile, entResInfo["mu"], _ = gI.getAndCheckInputFiles(
+        inputDir, "RASTERS", "mu parameter data", fileExt="raster", fileSuffix="_mu"
+    )
+
+    # check if xi frictionParameter file  is available
+    xiFile, entResInfo["xi"], _ = gI.getAndCheckInputFiles(
+        inputDir, "RASTERS", "xi parameter data", fileExt="raster", fileSuffix="_xi"
+    )
+
+    # check if k frictionParameter file  is available
+    kFile, entResInfo["k"], _ = gI.getAndCheckInputFiles(
+        inputDir, "RASTERS", "k parameter data", fileExt="raster", fileSuffix="_k"
+    )
+
+    # check if tauc frictionParameter file  is available
+    tauCFile, entResInfo["tauC"], _ = gI.getAndCheckInputFiles(
+        inputDir, "RASTERS", "tauC parameter data", fileExt="raster", fileSuffix="_tauc"
+    )
+
+    # check if bhd (tree diameter) parameter file is available - forest density (nd) needs to be in RES folder
+    bhdFile, entResInfo["bhd"], _ = gI.getAndCheckInputFiles(
+        inputDir, "RASTERS", "bhd parameter data", fileExt="raster", fileSuffix="_bhd"
+    )
+
+    entResInfo["relRemeshed"] = "No"
+    entResInfo["secondaryRelRemeshed"] = "No"
+    entResInfo["entRemeshed"] = "No"
+    entResInfo["tauCRemeshed"] = "No"
+    entResInfo["kRemeshed"] = "No"
+    entResInfo["muRemeshed"] = "No"
+    entResInfo["xiRemeshed"] = "No"
+    entResInfo["resRemeshed"] = "No"
+    entResInfo["bhdRemeshed"] = "No"
+
+    timeDepRelCsv, entResInfo["timeDepRelCsv"], _ = gI.getAndCheckInputFiles(
+        inputDir, "REL", "Time dependent release parameters (csv)", fileExt="csv"
+    )
+
+    # return DEM, first item of release, entrainment and resistance areas
+    inputSimFiles = {
+        "demFile": demFile,
+        "relFiles": relFiles,
+        "secondaryRelFile": secondaryReleaseFile,
+        "entFile": entFile,
+        "resFile": resFile,
+        "damFile": damFile,
+        "entResInfo": entResInfo,
+        "muFile": muFile,
+        "xiFile": xiFile,
+        "kFile": kFile,
+        "tauCFile": tauCFile,
+        "bhdFile": bhdFile,
+        "timeDepRelCsv": timeDepRelCsv,
+    }
+
+    for thFile in ["rel", "secondaryRel", "ent"]:
+        if entResInfo["%sThFileType" % thFile] in [".asc", ".tif"]:
+            if thFile == "rel":
+                inputSimFiles["relThFile"] = relFiles
+            else:
+                inputSimFiles["%sThFile" % thFile] = inputSimFiles["%sFile" % thFile]
+        else:
+            inputSimFiles["%sThFile" % thFile] = None
+
+    return inputSimFiles
+
+def getGeomRelVol(avaDir,cfgDebris,relThVal):
 
     # initialize logging
     # logUtils.initiateLogger(avaDir, "get geometric release volume")
@@ -133,24 +314,14 @@ def getGeomRelVol(avaDir,cfgDebris,relThval):
     cfgGen["relThFromFile"] = "False"
     cfgGen["secRelArea"] = "False"
 
-    # debris-flow density [kg/m³]
-    rho = cfgGen.getfloat("rho")
-    # print(f"debris-flow density rho = {rho} kg/m³\n")
-
     # read input
-    inputSimFiles = gI.getInputDataCom1DFA(avaDir)
+    inputSimFiles = getInputDataCom1DFA(avaDir)
     pathToDem = inputSimFiles["demFile"]
 
     # Erstes Release-Szenario (Shapefile) verwenden
     releaseFile = inputSimFiles["relFiles"][0]
     secondaryReleaseFile = inputSimFiles["secondaryRelFile"]
 
-    # print(f"DEM:             {pathToDem}")
-    # print(f"Release-Datei:   {releaseFile}")
-
-    # ------------------------------------------------------------------ #
-    # Volumen für verschiedene Release-Dicken berechnen
-    # ------------------------------------------------------------------ #
     volumes = {}
 
     for relTh in relThVal:
@@ -180,7 +351,7 @@ def adaptRelVol(cfgMain,avaDir,cfgDebris,geomRelVol):
     
     for Th in geomTh:
         actTh = Th
-        dTh = 1
+        dTh = 3
         actTh_B = actTh + dTh
         diffTh = 1
         dV_mean = 1
@@ -242,7 +413,7 @@ def adaptRelVol(cfgMain,avaDir,cfgDebris,geomRelVol):
 if __name__ == "__main__":
     # +++++++++REQUIRED+++++++++++++
     # variation of release thickness
-    relThVal = [6.27]
+    relThVal = [1.268, 1.389, 1.51, 1.63, 1.751]
 
     # suppress warnings from C:\Users\jlahrssen\AvaFrame\avaframe\in3Utils\cfgUtils.py:1012: PerformanceWarning:
     # TODO: Check?
@@ -259,23 +430,10 @@ if __name__ == "__main__":
     )
     cfgDebris,_ = cfgHandling.applyCfgOverride(defaultCfg, c1tifCfg, com1DFA, addModValues=False)
 
-    # workDir = Path(avaDir) / "Work" / "com1DFA"
-    # if workDir.exists():
-    #     shutil.rmtree(workDir)
-
-    # simDict,*_ = com1DFA.com1DFAPreprocess(cfgMain, cfgInfo=cfgDebris)
-    # print(simDict.keys())
-
-    # '_,simDict,_ = getActRelVol(cfgMain,avaDir,cfgDebris,relThVal)'
-    # print(f'mass per particle: {cfgDebris['GENERAL']['massPerPart']}')
-    # # for key in simDict['releaseDFTA_6c9773f318_com1_C_L_null_dfa']['cfgSim']['DEFAULT']:
-    # #     print(key)
-    # print(simDict[list(simDict.keys())[0]]['cfgSim']['GENERAL']['massPerPart'])
-    # call conversion
     actVolumes = getActRelVol(cfgMain,avaDir,cfgDebris,relThVal)
     print(f'actual volumes: {actVolumes}')
     geomVolumes = getGeomRelVol(avaDir,cfgDebris,relThVal)
     print(f'geometric volumes: {geomVolumes}')
-    print(f'actual cell area: {geomVolumes[relThVal[0]]/relThVal[0]:.2f} m²')
-    # print('=' * 30)
-    # adaptRelVol(cfgMain,avaDir,cfgDebris,geomVolumes)
+    print(f'actual release area: {geomVolumes[relThVal[0]]/relThVal[0]:.2f} m²')
+    print('=' * 30)
+    adaptRelVol(cfgMain,avaDir,cfgDebris,geomVolumes)
