@@ -61,8 +61,19 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
 
     # set simTypeList (that has been checked if available) as parameter in variationDict
     variationDict["simTypeList"] = simTypeList
-    # create a dataFrame with all possible combinations of the variationDict values
-    variationDF = pd.DataFrame(product(*variationDict.values()), columns=variationDict.keys())
+
+    # max length of all values
+    max_len = max(len(v) for v in variationDict.values())
+
+    varDic = variationDict.copy()
+    # extend all entries with length = 1
+    for k, v in varDic.items():
+        if isinstance(v, list) and len(v) == 1:
+            varDic[k] = v * max_len
+    #TODO: eventuell anpassen, falls release scenarios oder simtypes variiert werden sollen
+
+    # create a dataFrame with parameter sets defined in the config file
+    variationDF = pd.DataFrame(zip(*varDic.values()), columns=varDic.keys())
 
     # generate a dictionary of full simulation info for all simulations to be performed
     # simulation info must contain: simName, releaseScenario, relFile, configuration as dictionary
