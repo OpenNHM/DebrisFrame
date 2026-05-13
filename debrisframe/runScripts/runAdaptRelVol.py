@@ -136,7 +136,7 @@ def getDEMPath(avaDir):
 
     else:
         print('Warning: no remeshed topography available. Original topography is used')
-        inputDir = Path(avaDir, "Inputs", 'remeshedRasters')
+        inputDir = Path(avaDir, "Inputs")
         demFile = list(inputDir.glob("*.tif")) + list(inputDir.glob("*.asc"))
 
 
