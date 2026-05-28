@@ -4,10 +4,14 @@
 (modified by Paula Spannring)
 """
 
+import pathlib
 import rasterio
 import numpy as np
+import geopandas as gpd
 import logging
 import mmap
+
+from Cython.Compiler.Errors import message
 from scipy.ndimage import convolve
 import matplotlib as mpl
 
@@ -24,11 +28,11 @@ import avaframe.in3Utils.initialiseDirs as iD
 log = logging.getLogger("avaframe.debrisframe.c2TopRunDF")
 
 # Set global font size for plots
-mpl.rcParams['font.size'] = 8  # Set font size to 12
-mpl.rcParams['axes.titlesize'] = 12  # Set title font size
-mpl.rcParams['axes.labelsize'] = 8  # Set axis label font size
-mpl.rcParams['xtick.labelsize'] = 8  # Set x-axis tick font size
-mpl.rcParams['ytick.labelsize'] = 8  # Set y-axis tick font size
+mpl.rcParams["font.size"] = 8  # Set font size to 12
+mpl.rcParams["axes.titlesize"] = 12  # Set title font size
+mpl.rcParams["axes.labelsize"] = 8  # Set axis label font size
+mpl.rcParams["xtick.labelsize"] = 8  # Set x-axis tick font size
+mpl.rcParams["ytick.labelsize"] = 8  # Set y-axis tick font size
 
 
 def c2TopRunDFMain(cfgMain, cfgDebris):
@@ -41,10 +45,20 @@ def c2TopRunDFMain(cfgMain, cfgDebris):
 
     # get input data
     eventName = cfgDebris["GENERAL"]["name"]
-    xKoord = cfgDebris["GENERAL"].getfloat("xKoord")
-    yKoord = cfgDebris["GENERAL"].getfloat("yKoord")
     volume = cfgDebris["GENERAL"].getfloat("volume")
     coefficient = cfgDebris["GENERAL"].getfloat("coefficient")
+
+    # if coordinates do not exist in config file, check if a shp-file with the release point is provided
+    if cfgDebris["GENERAL"].get("xKoord") == "" or cfgDebris["GENERAL"].get("yKoord") == "":
+        cfgDebris["GENERAL"]["relPointFromShp"] = "True"
+    else:
+        cfgDebris["GENERAL"]["relPointFromShp"] = "False"
+        xKoord = cfgDebris["GENERAL"].getfloat("xKoord")
+        yKoord = cfgDebris["GENERAL"].getfloat("yKoord")
+
+    if cfgDebris["GENERAL"]["relPointFromShp"]:
+        inputDir = pathlib.Path(avaDir, "Inputs")
+        xKoord, yKoord = getCoordinatesFromPoint(inputDir)
 
     artificial_height = cfgDebris["GENERAL"]["energyHeight"]
     if artificial_height == "elevation":
@@ -83,11 +97,7 @@ def c2TopRunDFMain(cfgMain, cfgDebris):
             position = [row, col]
             band2.fill(0)
             mcs = 0
-            while (
-                    mcs < mcsmax
-                    and position[0] <= dataset.height - 1
-                    and position[1] <= dataset.width - 1
-            ):
+            while mcs < mcsmax and position[0] <= dataset.height - 1 and position[1] <= dataset.width - 1:
                 if position[0] > 0 and position[1] > 0:
                     if area >= perimeter:
                         break
@@ -104,11 +114,10 @@ def c2TopRunDFMain(cfgMain, cfgDebris):
                         else:
                             temp_height = (
                                     artificial_raster_height.read(1)[position[0], position[1]]
-                                    * gridsize * decay_factor
+                                    * gridsize
+                                    * decay_factor
                             )
-                        obj1 = randomsfp.MonteCarloSingleFlowPath(
-                            dataset, band2, position, temp_height
-                        )
+                        obj1 = randomsfp.MonteCarloSingleFlowPath(dataset, band2, position, temp_height)
                         position = obj1.NextStartCell()
                         band2[position[0], position[1]] = True
                         band3[position[0], position[1]] += 1
@@ -137,10 +146,8 @@ def c2TopRunDFMain(cfgMain, cfgDebris):
     # and distribute them more evenly. It simulates the physical process of diffusion,
     # in which material or energy moves from areas of high concentration to areas of low
     # concentration.
-    kernel = np.array([[0.05, 0.1, 0.05],
-                       [0.1, 0.4, 0.1],
-                       [0.05, 0.1, 0.05]])
-    band4 = convolve(band4, kernel, mode='constant', cval=0.0)
+    kernel = np.array([[0.05, 0.1, 0.05], [0.1, 0.4, 0.1], [0.05, 0.1, 0.05]])
+    band4 = convolve(band4, kernel, mode="constant", cval=0.0)
     #############################################################################################
     # --B-- # Apply Gaussian smoothing to reduce sharp peaks
     # from scipy.ndimage import gaussian_filter
@@ -188,12 +195,53 @@ def initializeSimulation(avaDir):
     return outputDir, demFile
 
 
+def getCoordinatesFromPoint(inputDir):
+    """
+    read release point shp file and extract coordinates
+    check if only one shp file with only one point exists
+
+    Parameters
+    ------------
+    inputDir : pathlib Path
+        directory to input folder
+
+    Returns
+    ------------
+    x: float
+        x coordinate of release point
+    y: float
+        y coordinate of release point
+    """
+
+    relFile, _, _ = gI.getAndCheckInputFiles(
+        inputDir,
+        "REL",
+        "release point",
+        fileExt="shp",
+    )
+    relPoint = gpd.read_file(relFile)
+    geomType = relPoint.geom_type.unique()
+    if len(geomType) != 1 and geomType[0] != "Point":
+        message = "The shp file %s does not contain a Point geometry type." % (relFile)
+        log.error(message)
+        raise ValueError(message)
+    if len(relPoint) != 1:
+        message = "Provide only one release point in %s!" % (relFile)
+        log.error(message)
+        raise ValueError(message)
+
+    point = relPoint.geometry.iloc[0]
+    x, y = point.x, point.y
+    log.info("release point coordinates are read from %s" % (relFile))
+    return x, y
+
+
 # Funktion zum Testen ob unterschiedliche Dezimaltrennzeichen in den Rasterdaten vorliegen
 def needs_preprocessing(file_path):
     """Check if the file contains commas as decimal separators."""
     with open(file_path, "r", encoding="utf-8") as f:
         with mmap.mmap(f.fileno(), length=0, access=mmap.ACCESS_READ) as mm:
-            return b',' in mm
+            return b"," in mm
 
 
 def preprocess_raster(file_path):
@@ -223,8 +271,8 @@ def preprocess_raster(file_path):
 # Funktion zur Adaptierung unterschiedlicher Dezimaltrennzeichen für Eingabewerte
 def parse_decimal(input_string):
     # Prüfen, ob ein Komma als Dezimaltrennzeichen verwendet wird
-    if ',' in input_string and '.' not in input_string:
-        input_string = input_string.replace(',', '.')
+    if "," in input_string and "." not in input_string:
+        input_string = input_string.replace(",", ".")
     try:
         return float(input_string)
     except ValueError:
