@@ -41,6 +41,7 @@ def c2TopRunDFMain(cfgMain, cfgDebris):
     # 4) try to allow computing several scenarios in one run (only for one DEM -> difference to original!!!)
 
     avaDir = cfgMain["MAIN"]["avalancheDir"]
+    # TODO: delete work folder first?
     output_dir, dem_file = initializeSimulation(avaDir)
 
     # get input data
