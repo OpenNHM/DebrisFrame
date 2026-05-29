@@ -42,7 +42,6 @@ def c2TopRunDFMain(cfgMain, cfgDebris):
     # 4) try to allow computing several scenarios in one run (only for one DEM -> difference to original!!!)
 
     avaDir = cfgMain["MAIN"]["avalancheDir"]
-    # TODO: delete work folder first?
     initProj.cleanSingleAvaDir(avaDir, deleteOutput=False)
     output_dir, dem_file = initializeSimulation(avaDir)
 
@@ -71,6 +70,7 @@ def c2TopRunDFMain(cfgMain, cfgDebris):
     # Preprocess the DEM file if necessary
     processed_dem_file = preprocess_raster(dem_file)
     demData = rasterUtils.readRaster(processed_dem_file, noDataToNan=False)
+    # TODO: only work with the open rasterio file or also read in raster data and header?
     demDataset = rasterio.open(processed_dem_file)
 
     band = demData["rasterData"]
