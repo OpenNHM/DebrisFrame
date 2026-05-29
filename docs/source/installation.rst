@@ -48,7 +48,7 @@ To run c2TopRunDF, clone the current pyTopRunDF version first::
 and edit ``local_debrisframeCfg.ini`` with your favorite text editor and adjust the variable
 ``avalancheDir`` for example to ``data/debrisTopRun``, then run::
 
-  python runC2ToprunDF.py
+  python runC2TopRunDF.py
 
 
 In comparison to `pyTopRunDF <https://github.com/schidli/pyTopRunDF#>`_,

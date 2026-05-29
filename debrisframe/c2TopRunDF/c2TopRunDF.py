@@ -11,7 +11,6 @@ import geopandas as gpd
 import logging
 import mmap
 
-from Cython.Compiler.Errors import message
 from scipy.ndimage import convolve
 import matplotlib as mpl
 
@@ -21,6 +20,7 @@ from debrisframe.c2TopRunDF.pyTopRunDFRepo.PlotResult import HillshadePlotter
 import avaframe.in1Data.getInput as gI
 import avaframe.in3Utils.initialiseDirs as iD
 import avaframe.in3Utils.initializeProject as initProj
+import avaframe.in2Trans.rasterUtils as rasterUtils
 
 # To get a reproduceable result, set the seed:
 # np.random.seed(42)
@@ -29,7 +29,7 @@ import avaframe.in3Utils.initializeProject as initProj
 log = logging.getLogger("avaframe.debrisframe.c2TopRunDF")
 
 # Set global font size for plots
-mpl.rcParams["font.size"] = 8  # Set font size to 12
+mpl.rcParams["font.size"] = 8  # Set font size to 8
 mpl.rcParams["axes.titlesize"] = 12  # Set title font size
 mpl.rcParams["axes.labelsize"] = 8  # Set axis label font size
 mpl.rcParams["xtick.labelsize"] = 8  # Set x-axis tick font size
@@ -64,43 +64,46 @@ def c2TopRunDFMain(cfgMain, cfgDebris):
         xKoord, yKoord = getCoordinatesFromPoint(inputDir)
 
     artificial_height = cfgDebris["GENERAL"]["energyHeight"]
-    if artificial_height == "elevation":
-        artificial_raster_height = rasterio.open(output_dir / "elevation.asc")
-    else:
+    if artificial_height != "elevation":
         artificial_height = parse_decimal(str(artificial_height))
 
     # Open the DEM file
     # Preprocess the DEM file if necessary
     processed_dem_file = preprocess_raster(dem_file)
-    dataset = rasterio.open(processed_dem_file)
-    band = dataset.read(1)
-    gridsize = dataset.res[0]
+    demData = rasterUtils.readRaster(processed_dem_file, noDataToNan=False)
+    demDataset = rasterio.open(processed_dem_file)
+
+    band = demData["rasterData"]
+    demHeader = demData["header"]
+    gridsize = demHeader["cellsize"]
     # Initialize variables
     simarea = volume ** (2 / 3) * coefficient
     perimeter = simarea / gridsize ** 2
-    row, col = dataset.index(xKoord, yKoord)
+    row, col = demDataset.index(xKoord, yKoord)
     band2 = np.copy(band)
     band3 = np.copy(band)
     band3.fill(0)
     area = 0
-    mcsmax = 500
+    mcsmax = cfgDebris["GENERAL"].getint("mcsmax")
+    numLoopSim = cfgDebris["GENERAL"].getint("numLoopSimulation")
+    randomRadius = cfgDebris["GENERAL"].getfloat("randomRadius")
+    nrows = demHeader["nrows"]
+    ncols = demHeader["ncols"]
+    denominator = cfgDebris["GENERAL"].getfloat("denominator")
 
     # Flowpath simulation
-    for x in range(0, 100000):
+    for x in range(0, numLoopSim):
         if area >= perimeter:
             break
         else:
             # In order to avoid implausible deposition heights due to an identical starting point, each starting point
             # of a single flow run is determined randomly within a certain radius.
-            random_radius = (
-                3  # Define the radius for random starting points to be defined; Default: 3 gridsizes.
-            )
-            row = np.random.randint(max(0, row - random_radius), min(dataset.height, row + random_radius))
-            col = np.random.randint(max(0, col - random_radius), min(dataset.width, col + random_radius))
+            row = np.random.randint(max(0, row - randomRadius), min(nrows, row + randomRadius))
+            col = np.random.randint(max(0, col - randomRadius), min(ncols, col + randomRadius))
             position = [row, col]
             band2.fill(0)
             mcs = 0
-            while mcs < mcsmax and position[0] <= dataset.height - 1 and position[1] <= dataset.width - 1:
+            while mcs < mcsmax and position[0] <= nrows - 1 and position[1] <= ncols - 1:
                 if position[0] > 0 and position[1] > 0:
                     if area >= perimeter:
                         break
@@ -111,16 +114,18 @@ def c2TopRunDFMain(cfgMain, cfgDebris):
                         # significant over longer distances. A smaller denominator causes faster decay, meaning
                         # the decay factor approaches zero more quickly.
                         distance = np.sqrt((position[0] - row) ** 2 + (position[1] - col) ** 2)
-                        decay_factor = np.exp(-distance / 100)  # Example decay factor with denominantor=100
+                        decay_factor = np.exp(-distance / denominator)
                         if isinstance(artificial_height, float):
                             temp_height = artificial_height * gridsize * decay_factor
                         else:
+                            artificial_raster_height = rasterio.open(output_dir / "elevation.asc")
                             temp_height = (
                                     artificial_raster_height.read(1)[position[0], position[1]]
                                     * gridsize
                                     * decay_factor
                             )
-                        obj1 = randomsfp.MonteCarloSingleFlowPath(dataset, band2, position, temp_height)
+                            artificial_raster_height.close()
+                        obj1 = randomsfp.MonteCarloSingleFlowPath(demDataset, band2, position, temp_height)
                         position = obj1.NextStartCell()
                         band2[position[0], position[1]] = True
                         band3[position[0], position[1]] += 1
@@ -135,7 +140,6 @@ def c2TopRunDFMain(cfgMain, cfgDebris):
     max_val = np.amax(band3)
     band3 = band3 / max_val
     meanh = volume / perimeter
-    band4 = band3 * meanh
 
     dummy = np.sum(band3)
     diff = volume / (dummy * gridsize ** 2)
@@ -149,7 +153,9 @@ def c2TopRunDFMain(cfgMain, cfgDebris):
     # and distribute them more evenly. It simulates the physical process of diffusion,
     # in which material or energy moves from areas of high concentration to areas of low
     # concentration.
-    kernel = np.array([[0.05, 0.1, 0.05], [0.1, 0.4, 0.1], [0.05, 0.1, 0.05]])
+    flatKernel = [float(value) for value in cfgDebris["GENERAL"]["kernelMatrixValues"].split(",")]
+    shapeKernel = tuple(int(value) for value in cfgDebris["GENERAL"]["kernelMatrixShape"].split(","))
+    kernel = np.array(flatKernel).reshape(shapeKernel)
     band4 = convolve(band4, kernel, mode="constant", cval=0.0)
     #############################################################################################
     # --B-- # Apply Gaussian smoothing to reduce sharp peaks
@@ -170,7 +176,8 @@ def c2TopRunDFMain(cfgMain, cfgDebris):
         log.info("Deposition volume matches input volume.")
 
     # Save the output raster
-    out_meta = dataset.meta.copy()
+    out_meta = demDataset.meta.copy()
+    demDataset.close()
     out_meta.update({"driver": "AAIGrid", "dtype": "float32"})
     output_raster_path = output_dir / "depo.asc"
     with rasterio.open(output_raster_path, "w", **out_meta) as dest:
@@ -178,11 +185,8 @@ def c2TopRunDFMain(cfgMain, cfgDebris):
     # Clean up the temporary file if preprocessing was done
     if processed_dem_file != dem_file:
         processed_dem_file.unlink()  # Deletes the temporary file
-    fin = "finished"
 
-    if fin is None:
-        fin = "terminated"
-    log.info(f"Simulation {fin}")
+    log.info(f"Simulation finished")
     # Create an instance of the HillshadePlotter class
 
     plotter = HillshadePlotter()
@@ -252,7 +256,7 @@ def preprocess_raster(file_path):
     if not needs_preprocessing(file_path):
         return file_path  # Return the original file if no preprocessing is needed
 
-    temp_file = file_path.with_suffix(".asc")  # Create a temporary file
+    temp_file = file_path.with_stem(file_path.stem + "_temp").with_suffix(".asc")  # Create a temporary file
 
     with open(file_path, "r", encoding="utf-8") as f_in:
         # Map the file into memory
