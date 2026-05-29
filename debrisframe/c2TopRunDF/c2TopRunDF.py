@@ -20,6 +20,7 @@ from debrisframe.c2TopRunDF.pyTopRunDFRepo.PlotResult import HillshadePlotter
 
 import avaframe.in1Data.getInput as gI
 import avaframe.in3Utils.initialiseDirs as iD
+import avaframe.in3Utils.initializeProject as initProj
 
 # To get a reproduceable result, set the seed:
 # np.random.seed(42)
@@ -42,6 +43,7 @@ def c2TopRunDFMain(cfgMain, cfgDebris):
 
     avaDir = cfgMain["MAIN"]["avalancheDir"]
     # TODO: delete work folder first?
+    initProj.cleanSingleAvaDir(avaDir, deleteOutput=False)
     output_dir, dem_file = initializeSimulation(avaDir)
 
     # get input data
