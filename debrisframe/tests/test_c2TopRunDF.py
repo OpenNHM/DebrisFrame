@@ -43,6 +43,12 @@ def test_runC2TopRunDF(tmp_path):
         "energyHeight": "0.1",
         "volume": "4000",
         "coefficient": "28",
+        "mcsmax": "500",
+        "numLoopSimulation": "100000",
+        "randomRadius": "3",
+        "denominator": "100",
+        "kernelMatrixValues": "0.05, 0.1, 0.05, 0.1, 0.4, 0.1, 0.05, 0.1, 0.05",
+        "kernelMatrixShape": "3, 3",
     }
     # To get a reproduceable result, set the seed as in the test case:
     np.random.seed(42)
