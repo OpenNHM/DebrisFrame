@@ -17,6 +17,7 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
     "sphinx.ext.intersphinx",
+    "sphinx.ext.autosectionlabel",
 ]
 
 intersphinx_mapping = {
@@ -26,6 +27,10 @@ intersphinx_mapping = {
 intersphinx_disabled_domains = ["std"]
 
 templates_path = ["_templates"]
+
+# make referencing unique if the same section heading exists doubly
+autosectionlabel_prefix_document = True
+autosectionlabel_maxdepth = 4
 
 # -- Options for HTML output
 

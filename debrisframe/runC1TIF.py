@@ -15,10 +15,10 @@ from avaframe.in3Utils import fileHandlerUtils as fU
 
 # import computation modules
 import debrisframe as debf
-from debrisframe.c1Tif import c1Tif
+from debrisframe.c1TIF import c1TIF
 
 
-def runC1Tif(debrisDir=""):
+def runC1TIF(debrisDir=""):
     """Run com1DFA with debris flow parameters with only an avalanche/ debris flow directory as input
 
     Parameters
@@ -35,7 +35,7 @@ def runC1Tif(debrisDir=""):
     startTime = time.time()
 
     # log file name; leave empty to use default runLog.log
-    logName = "runC1Tif"
+    logName = "runC1TIF"
 
     # Load debris flow directory from general configuration file
     # More information about the configuration can be found here
@@ -59,10 +59,10 @@ def runC1Tif(debrisDir=""):
     initProj.cleanSingleAvaDir(debrisDir, deleteOutput=False)
 
     # load debris flow config
-    DebrisCfg = cfgUtils.getModuleConfig(c1Tif)
+    DebrisCfg = cfgUtils.getModuleConfig(c1TIF)
 
     # perform com1DFA simulation with debris flow settings
-    _, plotDict, reportDictList, _ = c1Tif.c1TifMain(cfgMain, DebrisCfg)
+    _, plotDict, reportDictList, _ = c1TIF.c1TIFMain(cfgMain, DebrisCfg)
 
     # Get peakfiles to return to QGIS
     debrisDir = pathlib.Path(debrisDir)
@@ -88,4 +88,4 @@ if __name__ == "__main__":
     )
     print(parser)
     args = parser.parse_args()
-    runC1Tif(str(args.debrisdir))
+    runC1TIF(str(args.debrisdir))
