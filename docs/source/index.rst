@@ -29,6 +29,21 @@ General
    installation.rst
 
 
+Computational modules
+=====================
+
+.. only:: html
+
+    * :doc:`moduleC1TIF`
+
+.. toctree::
+   :maxdepth: 3
+   :hidden:
+   :caption: Computational modules
+
+   moduleC1TIF.rst
+
+
 Indices and tables
 ==================
 
