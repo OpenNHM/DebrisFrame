@@ -33,5 +33,3 @@ change into your ``debrisframe`` directory (replace [YOURDIR] with your path fro
   python runC1TIF.py
 
 
-  
-
