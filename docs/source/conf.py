@@ -48,9 +48,23 @@ html_theme_options = {
 # of the sidebar.
 html_logo = "_static/logo.png"
 
+# Add any paths that contain custom static files (such as style sheets) here,
+# relative to this directory. They are copied after the builtin static files,
+# so a file named "default.css" will overwrite the builtin "default.css".
+html_static_path = ["_static"]
+
 
 # -- Options for LaTeX output ---------------------------------------------
 latex_logo = "_static/logo.png"
 
 # -- Options for EPUB output
 epub_show_urls = "footnote"
+
+# -- Options for referencing -------------------------------------------
+numfig = True
+math_numfig = True
+math_eqref_format = "Eq.{number}"
+
+
+def setup(app):
+    app.add_css_file("css/custom.css")

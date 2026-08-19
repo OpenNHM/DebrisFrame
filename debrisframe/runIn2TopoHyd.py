@@ -16,10 +16,11 @@ import debrisframe as debf
 from debrisframe.c1TIF import c1TIF
 from debrisframe.in2TopoHyd import in2TopoHyd
 
+
 def runIn2TopoHyd(debrisDir=""):
     """
     Run in2TopoHyd with only a debris flow directory as input
-    
+
     Parameters
     ----------
     debrisDir: str
@@ -63,17 +64,12 @@ def runIn2TopoHyd(debrisDir=""):
     # Run in2TopoHyd
     in2TopoHyd.in2TopoHydMain(debrisDir, topoHydCfg, debrisCfg)
 
-    # Get csv-file with initial conditions
-    debrisDir = pathlib.Path(debrisDir)
-    inputDir = debrisDir / "Outputs" / "in2TopoHyd" / "peakFiles"
-    # inputDir = avaDir / "Outputs" / "in2TopoHyd" / "peakFiles"
-    # peakFilesDF = fU.makeSimDF(inputDir, avaDir=avaDir)
-
     # Print time needed
     endTime = time.time()
     log.info("Took %6.1f seconds to calculate." % (endTime - startTime))
 
     return
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run debris flow workflow")
@@ -88,4 +84,3 @@ if __name__ == "__main__":
     print(parser)
     args = parser.parse_args()
     runIn2TopoHyd(str(args.debrisdir))
-

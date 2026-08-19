@@ -101,7 +101,7 @@ rather than assigning one constant thickness to every cell.
 7. Flow direction
 ^^^^^^^^^^^^^^
 
-The release line is supposed to be normal to the horizontal channel flow direction.
+The flow direction is by defintion perpendicular to the release line.
 
 .. Note::
   It is in the responsibility of the user to create a release line normal to the channel flow direction!
@@ -109,18 +109,6 @@ The release line is supposed to be normal to the horizontal channel flow directi
 
 In a predefined normal distance the program generates two additional cross sections on each side of the release line (compare to calculation of slope).
 The mean elevations of this virtual cross sections are then compared to determine which of the two possible normal directions corresponds to the downslope direction.
-
-The vertical component is obtained from the DEM surface normal. The resulting three-dimensional direction vector is multiplied by the calculated mean velocity to obtain the velocity components:
-
-::
-
-```
-velocityX
-velocityY
-velocityZ
-```
-
-These components are assigned to every wet cell belonging to the respective timestep.
 
 Input
 ---------
@@ -136,7 +124,26 @@ The :py:mod:`in2TopoHyd` module requires a
 * **and levee points**.
 
 :py:mod:`in2TopoHyd` calculations are performed within a process directory, organized with the
-folder structure described in the `AvaFrame documentation <https://docs.avaframe.org/en/latest/moduleCom1DFA.html#input>`_.
+folder structure described below.
+
+.. Note::
+
+  ::
+
+    NameOfDebrisFlow/
+      Inputs/
+        DEM raster file
+        CFGs/     - expert configuration files (optional)
+        REL/      - release line
+        LEVEE/    - levee points
+      Outputs/
+        in2TopoHyd/
+          initCondHyd.csv
+          crossSectionCells.csv                (optional)
+        Plots/
+          crossSection.png
+          ratingCurve.png
+      Work/
 
 
 Digital elevation model
@@ -150,14 +157,14 @@ Release line
 ^^^^^^^^^^^^
 
 The release line is read from the ``Inputs/REL`` directory. It must contain **exactly two points**, representing the starting and ending point of the release line.
-If a ``releaseScenario`` is specified in ``local_c1TIFCfg.ini``, this file is used (**with** extension .shp). Otherwise, the module searches the ``REL`` directory for a release file.
+If a ``releaseScenario`` is specified in ``(local_)c1TIFCfg.ini``, this file is used (**with** extension .shp). Otherwise, the module searches the ``REL`` directory for a release file.
 If no unique release file can be identified, the module stops with an error.
 The release line defines the terrain cross section used for the hydraulic calculations.
 
 Levee points
 ^^^^^^^^^^^^
 
-The module requires exactly one point shapefile in ``Inputs/POINTS`` whose filename ends with ``*levee.shp``.
+The module requires exactly one point shapefile in ``Inputs/LEVEE`` whose filename ends with ``*levee.shp``.
 The levee points define the lateral limits of the debris-flow channel. Each levee point is assigned to the nearest DEM cell of the release cross section.
 
 Discharge hydrograph
@@ -200,19 +207,6 @@ The default parameter values are stored in ``in2TopoHydCfg.ini``.
 
 Output
 -------
-
-The module creates the following output structure:
-
-:: 
-
-  Outputs/
-  └── in2TopoHyd/
-      ├── initCondHyd.csv
-      ├── crossSectionCells.csv        (optional)
-      └── Plots/
-          ├── crossSection.png
-          └── ratingCurve.png
-
 
 Initial hydraulic conditions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^

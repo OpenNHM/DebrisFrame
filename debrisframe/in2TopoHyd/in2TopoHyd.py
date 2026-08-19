@@ -6,7 +6,6 @@ Get initial conditions for hydrograph
 import pathlib
 import math
 import logging
-import glob
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -21,6 +20,7 @@ import avaframe.in3Utils.fileHandlerUtils as fU
 # create local logger under avaframe namespace to use its logging configuration
 log = logging.getLogger("avaframe.debrisframe.in2TopoHyd")
 
+
 def assignCrossSectionCoords(leveePoints, crossSection):
     """
     Assign the nearest cross-section coordinates to the levee points
@@ -30,7 +30,7 @@ def assignCrossSectionCoords(leveePoints, crossSection):
     leveePoints: dict
         dictionary containing x,y-coordinates of levee points
     crossSection: dict
-        dictionaray containing x,y-coordinates of cross-section cells
+        dictionary containing x,y-coordinates of cross-section cells
 
     Returns
     --------
@@ -45,7 +45,7 @@ def assignCrossSectionCoords(leveePoints, crossSection):
     ycoordLevee = leveePoints["y"]
 
     idPoint = []
-    for x,y in zip(xcoordLevee, ycoordLevee):
+    for x, y in zip(xcoordLevee, ycoordLevee):
         diffX = crossSection["x"] - x
         diffY = crossSection["y"] - y
         dist = np.sqrt(diffX * diffX + diffY * diffY)
@@ -53,13 +53,25 @@ def assignCrossSectionCoords(leveePoints, crossSection):
         id = np.where(dist == id)
         idPoint.append(id[0][0])
 
+    xLevee = crossSection["x"][idPoint]
+    yLevee = crossSection["y"][idPoint]
+    elevLevee = crossSection["elevation"][idPoint]
+    sLevee = crossSection["s"][idPoint]
+
+    if np.min(sLevee) == 0.0 or np.max(sLevee) == crossSection["s"][-1]:
+        message = """At least one levee point lies on the starting or ending point of your release line!
+            Ensure that you keep a distance of at least one raster cell interior to the edges"""
+        log.error(message)
+        raise IndexError(message)
+
     crossSection["idLevee"] = idPoint
-    crossSection["xLevee"] = crossSection["x"][idPoint]
-    crossSection["yLevee"] = crossSection["y"][idPoint]
-    crossSection["elevLevee"] = crossSection["elevation"][idPoint]
-    crossSection["sLevee"] = crossSection["s"][idPoint]
+    crossSection["xLevee"] = xLevee
+    crossSection["yLevee"] = yLevee
+    crossSection["elevLevee"] = elevLevee
+    crossSection["sLevee"] = sLevee
 
     return crossSection
+
 
 def assignRasterCoords(cellSize, releaseLine):
     """
@@ -81,22 +93,74 @@ def assignRasterCoords(cellSize, releaseLine):
     # assign raster cell coord to starting and ending point of release line
     xcoord = []
     ycoord = []
-    for i in range(len(releaseLine["x"])):
-        dx = releaseLine["x"][i] % cellSize
-        dy = releaseLine["y"][i] % cellSize
-        if dx < cellSize/ 2:
-            xcoord.append(releaseLine["x"][i] - releaseLine["x"][i] % cellSize)
+    for x, y in zip(releaseLine["x"], releaseLine["y"]):
+        dx = x % cellSize
+        dy = y % cellSize
+        if dx < cellSize / 2:
+            xcoord.append(x - x % cellSize)
         else:
-            xcoord.append(releaseLine["x"][i] + (cellSize - releaseLine["x"][i] % cellSize))
+            xcoord.append(x + (cellSize - x % cellSize))
         if dy < cellSize / 2:
-            ycoord.append(releaseLine["y"][i] - releaseLine["y"][i] % cellSize)
+            ycoord.append(y - y % cellSize)
         else:
-            ycoord.append(releaseLine["y"][i] + (cellSize - releaseLine["y"][i] % cellSize))
+            ycoord.append(y + (cellSize - y % cellSize))
 
     releaseLine["xRaster"] = np.array(xcoord)
     releaseLine["yRaster"] = np.array(ycoord)
 
     return releaseLine
+
+
+def computeSubArea(elevation, distance, surfElev, wetCellIdx, idx):
+    """
+    Computes flow subareas at the boundaries of a wetted cross section
+    Handles the first (0) and last element (-1) of an index array
+
+    Parameters
+    -----------
+    elevation: 1D-array
+        the elevation of the cross-section cells
+    distance: 1D-array
+        the path along (distance) along the cross-section cells
+    surfElev: float
+        surface elevation of debris flow
+    wetCellIdx: 1D-array
+        indices of wetted cells
+    idx: int
+        0 or -1
+        Starting or ending index
+
+    Returns
+    --------
+    subarea: float
+        flow subarea at the boundary of a wetted cross section
+    dx: float
+        horizontal distance that includes the flow subarea
+    """
+
+    if idx not in (0, -1):
+        raise ValueError("idx must be 0 or -1")
+
+    cellIdx = wetCellIdx[idx]
+
+    if idx == 0:
+        neighborIdx = cellIdx - 1
+    elif idx == -1:
+        neighborIdx = cellIdx + 1
+
+    ds = abs(distance[neighborIdx] - distance[cellIdx])
+    diffElev = elevation[neighborIdx] - elevation[cellIdx]
+    slope = diffElev / ds
+    th = surfElev - elevation[cellIdx]
+    if slope == 0.0:
+        dx = ds
+    else:
+        dx = th / slope
+
+    subArea = 0.5 * th * dx
+
+    return subArea, dx
+
 
 def computeRatingCurve(crossSection, topoHydCfg):
     """
@@ -106,9 +170,9 @@ def computeRatingCurve(crossSection, topoHydCfg):
     Parameters
     -----------
     crossSection: dict
-        dictionaray containing x,y-coordinates of cross-section cells,
+        dictionary containing x,y-coordinates of cross-section cells,
         the elevation of the cross-section cells,
-        the path along (distance) along the cross-section cells
+        the path (distance) along the cross-section cells
     topoHydCfg: configparser object
         configuration settings for the in2TopoHyd-module
 
@@ -125,11 +189,11 @@ def computeRatingCurve(crossSection, topoHydCfg):
     idLevee = crossSection["idLevee"]
     elevLevee = crossSection["elevLevee"]
     elevation = crossSection["elevation"]
-    minElev = np.min(elevation[min(idLevee):max(idLevee) + 1])
+    minElev = np.min(elevation[min(idLevee) : max(idLevee) + 1])
     # horizontal distance between neighbouring cells
     distance = crossSection["s"]
     # get elevation steps
-    dElev = float(topoHydCfg["GENERAL"]["dElev"])
+    dElev = topoHydCfg["GENERAL"].getfloat("dElev")
 
     # initialize lists
     thickness = []
@@ -142,15 +206,14 @@ def computeRatingCurve(crossSection, topoHydCfg):
     numIt = (np.min(elevLevee) - minElev) / dElev
     numIt = math.floor(numIt)
 
-
     # routine loop: calculate flow area for given flow thickness
     for step in range(1, numIt + 1):
         # get surface level
         thick = step * dElev
-        surfLev = minElev + thick
+        surfElev = minElev + thick
         # find indices of cells that are equal to or lie below surface level
         # search only in area between the two levee points
-        idx = np.where(elevation[min(idLevee):max(idLevee) + 1] <= surfLev)[0]
+        idx = np.where(elevation[min(idLevee) : max(idLevee) + 1] <= surfElev)[0]
         idx = idx + min(idLevee)
 
         if len(idx) == 0:
@@ -159,50 +222,40 @@ def computeRatingCurve(crossSection, topoHydCfg):
             raise ValueError(message)
 
         # np.trapz() only calculates the area between the vertices (cell centers)
-        # if the tickness at the very left and the very right cell is still > 0,
+        # if the thickness at the very left and the very right cell is still > 0,
         # there are remaining subareas on both sides that have to be considered
-        left, right = idx[0], idx[-1]
-        diffElevLeft = elevation[left - 1] - elevation[left]
-        dsLeft = distance[left] - distance[left - 1]
-        slopeLeft = diffElevLeft / dsLeft
-        if slopeLeft == 0.0:
-            slopeLeft = 1e-9
-        thLeft = surfLev - elevation[left]
-        dxLeft = thLeft / slopeLeft
-        areaLeft = 0.5 * thLeft * dxLeft
-
-        diffElevRight = elevation[right + 1] - elevation[right]
-        dsRight = distance[right + 1] - distance[right]
-        slopeRight = diffElevRight / dsRight
-        if slopeRight == 0.0:
-            slopeRight = 1e-9
-        thRight = surfLev - elevation[right]
-        dxRight = thRight / slopeRight
-        areaRight = 0.5 * thRight * dxRight
+        areaLeft, dxLeft = computeSubArea(
+            elevation=elevation, distance=distance, surfElev=surfElev, wetCellIdx=idx, idx=0
+        )
+        areaRight, dxRight = computeSubArea(
+            elevation=elevation, distance=distance, surfElev=surfElev, wetCellIdx=idx, idx=-1
+        )
 
         # get cell elevations and distances between cells
         elev = elevation[idx]
         dist = distance[idx]
         # compute flow area
-        thickCells = surfLev - elev
-        #TODO: function np.trapz was changed to np.trapezoid in later numpy versions
+        thickCells = surfElev - elev
+        # TODO: function np.trapz was changed to np.trapezoid in later numpy versions
         flowArea.append(np.trapz(np.maximum(thickCells, 0), dist) + np.sum([areaLeft, areaRight]))
 
         # save results
         thickness.append(thick)
-        surfaceLevel.append(surfLev)
+        surfaceLevel.append(surfElev)
         xmin.append(np.min(dist) - dxLeft)
         xmax.append(np.max(dist) + dxRight)
-        
-    ratingCurve = {"thickness": thickness,
-                   "flowArea": flowArea,
-                   "minElevation": minElev,
-                   "surfElev": surfaceLevel,
-                   "xmin": xmin,
-                   "xmax": xmax
-                   }
+
+    ratingCurve = {
+        "thickness": np.array(thickness),
+        "flowArea": np.array(flowArea),
+        "minElevation": minElev,
+        "surfElev": np.array(surfaceLevel),
+        "xmin": np.array(xmin),
+        "xmax": np.array(xmax),
+    }
 
     return ratingCurve
+
 
 def computeSlope(dem, crossSection):
     """
@@ -232,46 +285,46 @@ def computeSlope(dem, crossSection):
     ycoordEnd = crossSection["y"][-1]
     # get cell size of dem
     csz = dem["header"]["cellsize"]
-        
+
+
     # get direction of cross section
     dx = xcoordEnd - xcoordStart
     dy = ycoordEnd - ycoordStart
-    # magnitude of direction vector
-    magnitude = np.sqrt(dx**2 + dy**2)
 
     # calculate unit normal vectors on left- and right-handside
     # of direction vector
-    n1 = np.array([-dy, dx]) / magnitude
-    n2 = np.array([dy, -dx]) / magnitude
-    
+    nx1, ny1, _ = DFAtls.normalize(-dy, dx, 0)
+    nx2, ny2, _ = DFAtls.normalize(dy, -dx, 0)
+
     # compute two additional cross sections on both handsides of the release line, respectively,
     # in distance d of original cross section
     d = 2 * np.sqrt(csz**2 + csz**2)
     # move starting and ending points of release line in direction of n1 and n2
-    xcoordStart1 = xcoordStart + d * n1[0]
-    ycoordStart1 = ycoordStart + d * n1[1]
-    xcoordEnd1 = xcoordEnd + d * n1[0]
-    ycoordEnd1 = ycoordEnd + d * n1[1]
-    xcoordStart2 = xcoordStart + d * n2[0]
-    ycoordStart2 = ycoordStart + d * n2[1]
-    xcoordEnd2 = xcoordEnd + d * n2[0]
-    ycoordEnd2 = ycoordEnd + d * n2[1]
+    xcoordStart1 = xcoordStart + d * nx1
+    ycoordStart1 = ycoordStart + d * ny1
+    xcoordEnd1 = xcoordEnd + d * nx1
+    ycoordEnd1 = ycoordEnd + d * ny1
+    xcoordStart2 = xcoordStart + d * nx2
+    ycoordStart2 = ycoordStart + d * ny2
+    xcoordEnd2 = xcoordEnd + d * nx2
+    ycoordEnd2 = ycoordEnd + d * ny2
     # save results in a dictionary
     coord1 = {"x": np.array([xcoordStart1, xcoordEnd1]), "y": np.array([ycoordStart1, ycoordEnd1])}
     coord2 = {"x": np.array([xcoordStart2, xcoordEnd2]), "y": np.array([ycoordStart2, ycoordEnd2])}
     # get elevation for new cross sections
     crossSect1 = getCrossSectionCells(dem, coord1)
-    crossSect2 = getCrossSectionCells(dem , coord2)
+    crossSect2 = getCrossSectionCells(dem, coord2)
     # between levee points
     start = min(crossSection["idLevee"])
     end = max(crossSection["idLevee"])
     # get mean elevation on each handside
-    meanElev1 = np.mean(crossSect1["elevation"][start:end + 1])
-    meanElev2 = np.mean(crossSect2["elevation"][start:end + 1])
+    meanElev1 = np.mean(crossSect1["elevation"][start : end + 1])
+    meanElev2 = np.mean(crossSect2["elevation"][start : end + 1])
     # get slope as central difference
     slope = abs((meanElev1 - meanElev2) / (2 * d))
-    
+
     return slope
+
 
 def computeRelFlowThVel(discharge, topoHydCfg, ratingCurve, dem, crossSection):
     """
@@ -296,16 +349,18 @@ def computeRelFlowThVel(discharge, topoHydCfg, ratingCurve, dem, crossSection):
     Returns
     --------
     thickness: 1D-array
-        flow thickness and velocity values as starting condition
+        flow thickness
+    flowVel: 1D-array
+        flow velocity
     """
+    # TODO: same for other functions
+    slope = topoHydCfg["GENERAL"].get("slope", fallback="")
+    velType = topoHydCfg["GENERAL"].get("velType", fallback="rickenmann")
 
-    slope = topoHydCfg["GENERAL"]["slope"]
-    velType = topoHydCfg["GENERAL"]["velType"]
-
-    # defintion of the average slope of the cross section in flow direction
+    # definition of the average slope of the cross section in flow direction
     if slope == "":
         slope = computeSlope(dem, crossSection)
-    else: 
+    else:
         slope = float(slope)
 
     log.info(f"chosen slope: {slope:.2f}")
@@ -313,29 +368,26 @@ def computeRelFlowThVel(discharge, topoHydCfg, ratingCurve, dem, crossSection):
     flowVel = []
     # compute flow velocity
     if velType == "rickenmann":
-        # flow veloctiy after Rickenmann (1999)
+        # flow velocity after Rickenmann (1999)
         for q in discharge:
             v = 2.1 * math.pow(q, 0.33) * math.pow(slope, 0.33)
             flowVel.append(v)
 
-    #TODO: add addtional methods for calculating the flow velocity
-    
+    # TODO: add additional methods for calculating the flow velocity
+
     else:
         message = "No velType defined!"
         log.error(message)
         raise ValueError(message)
-    
+
     flowVel = np.round(np.array(flowVel), decimals=1)
-    
-    
+
     # calculate corresponding flow area
     flowArea = discharge / flowVel
 
     # fetch rating curve
     thicknessRC = ratingCurve["thickness"]
     flowAreaRC = ratingCurve["flowArea"]
-    # fetch debris-flow surface elevation
-    surfElevRC = ratingCurve["surfElev"]
     # check if the discharge is overtopping the channel
     idx = np.where(flowArea > max(flowAreaRC))[0]
     if len(idx) != 0:
@@ -345,9 +397,10 @@ def computeRelFlowThVel(discharge, topoHydCfg, ratingCurve, dem, crossSection):
         raise ValueError(message)
     # interpolate start flow thickness
     thickness = np.interp(flowArea, flowAreaRC, thicknessRC)
-    thickness = np.round(thickness, decimals = 2)
+    thickness = np.round(thickness, decimals=2)
 
     return thickness, flowVel
+
 
 def getCrossSectionCells(dem, releaseLine):
     """
@@ -407,24 +460,25 @@ def getCrossSectionCells(dem, releaseLine):
         # get modulus of division by cell size
         modulus = crossSectionY % csz
         # round to values that are divisible by cell size
-        crossSectionY = np.where(modulus < csz / 2,
-                                 crossSectionY - modulus,
-                                 crossSectionY + (csz - modulus))
+        crossSectionY = np.where(modulus < csz / 2, crossSectionY - modulus, crossSectionY + (csz - modulus))
 
     # get indices of cross-section cells
-    col = np.int32(np.array((crossSectionX - xllcenter) / csz))
-    row = np.int32(np.array((crossSectionY - yllcenter) / csz))
+    col = np.int32(np.round((crossSectionX - xllcenter) / csz))
+    row = np.int32(np.round((crossSectionY - yllcenter) / csz))
     # get elevation of cross-section cells
     elevCrossSection = elevation[row, col]
 
     crossSectIdx = np.array([row, col])
 
-    crossSection = {"x": crossSectionX,
-                    "y": crossSectionY,
-                    "elevation": elevCrossSection,
-                    "crossSectIdx": crossSectIdx}
+    crossSection = {
+        "x": crossSectionX,
+        "y": crossSectionY,
+        "elevation": elevCrossSection,
+        "crossSectIdx": crossSectIdx,
+    }
 
     return crossSection
+
 
 def getFlowDirection(crossSection, dem):
     """
@@ -433,18 +487,17 @@ def getFlowDirection(crossSection, dem):
 
     Parameters
     -----------
-    crossSection: dict  
+    crossSection: dict
         dictionary containing x,y-coordinates of cross-section cells,
         the elevation of the cross-section cells,
-        the path along (distance) along the cross-section cells
+        the path (distance) along the cross-section cells
     dem: dict
         elevation raster data
-    d: int
 
 
     Returns
     --------
-    flowDir: 1D-array
+    flwDir: 1D-array
         flow direction including x,y,z-components as unit normal vector of cross section
 
     """
@@ -456,44 +509,42 @@ def getFlowDirection(crossSection, dem):
     ycoordEnd = crossSection["y"][-1]
     # get cell size of dem
     csz = dem["header"]["cellsize"]
-        
+
     # get direction of cross section
     dx = xcoordEnd - xcoordStart
     dy = ycoordEnd - ycoordStart
-    # magnitude of direction vector
-    magnitude = np.sqrt(dx**2 + dy**2)
 
     # calculate unit normal vectors on left- and right-handside
     # of direction vector; x-y-plane
-    n1 = np.array([-dy, dx]) / magnitude
-    n2 = np.array([dy, -dx]) / magnitude
-    
+    nx1, ny1, _ = DFAtls.normalize(-dy, dx, 0)
+    nx2, ny2, _ = DFAtls.normalize(dy, -dx, 0)
+
     # compute two additional cross sections on both handsides of the release line, respectively,
     # in distance d of original cross section
     d = 2 * np.sqrt(csz**2 + csz**2)
     # move starting and ending points of release line in direction of n1 and n2
-    xcoordStart1 = xcoordStart + d * n1[0]
-    ycoordStart1 = ycoordStart + d * n1[1]
-    xcoordEnd1 = xcoordEnd + d * n1[0]
-    ycoordEnd1 = ycoordEnd + d * n1[1]
-    xcoordStart2 = xcoordStart + d * n2[0]
-    ycoordStart2 = ycoordStart + d * n2[1]
-    xcoordEnd2 = xcoordEnd + d * n2[0]
-    ycoordEnd2 = ycoordEnd + d * n2[1]
+    xcoordStart1 = xcoordStart + d * nx1
+    ycoordStart1 = ycoordStart + d * ny1
+    xcoordEnd1 = xcoordEnd + d * nx1
+    ycoordEnd1 = ycoordEnd + d * ny1
+    xcoordStart2 = xcoordStart + d * nx2
+    ycoordStart2 = ycoordStart + d * ny2
+    xcoordEnd2 = xcoordEnd + d * nx2
+    ycoordEnd2 = ycoordEnd + d * ny2
     # save results in a dictionary
     coord1 = {"x": np.array([xcoordStart1, xcoordEnd1]), "y": np.array([ycoordStart1, ycoordEnd1])}
     coord2 = {"x": np.array([xcoordStart2, xcoordEnd2]), "y": np.array([ycoordStart2, ycoordEnd2])}
     # get elevation for new cross sections
     crossSect1 = getCrossSectionCells(dem, coord1)
-    crossSect2 = getCrossSectionCells(dem , coord2)
+    crossSect2 = getCrossSectionCells(dem, coord2)
     # get mean elevation on each handside
     meanElev1 = np.mean(crossSect1["elevation"])
     meanElev2 = np.mean(crossSect2["elevation"])
     # get flow direction in x-y-plane
     if meanElev1 > meanElev2:
-        flwDir = n2
+        flwDir = np.array([nx2, ny2])
     else:
-        flwDir = n1
+        flwDir = np.array([nx1, ny1])
 
     # get z-component
     # get normal vector of the grid mesh
@@ -502,23 +553,23 @@ def getFlowDirection(crossSection, dem):
     NxNormed, NyNormed, NzNormed = DFAtls.normalize(demDict["Nx"], demDict["Ny"], demDict["Nz"])
     # compute z-component: 2D-vector must be rotated in 3D-space
     # normal vector of grid and normal vector of x-y-plane have to be perpendicular -> n * g = 0
-    nz = - (flwDir[0] * NxNormed + flwDir[1] * NyNormed) / NzNormed
+    nz = -(flwDir[0] * NxNormed + flwDir[1] * NyNormed) / NzNormed
 
     # get normal vector along cross section
     row = crossSection["crossSectIdx"][0]
     col = crossSection["crossSectIdx"][1]
-    nz = nz[row,col]
+    nz = nz[row, col]
     # between levee points
     start = min(crossSection["idLevee"])
     end = max(crossSection["idLevee"])
-    nz = nz[start:end +1]
+    nz = nz[start : end + 1]
     nz = np.mean(nz)
     # combine to 3D-unit-normal vector
-    flwDir = np.append(flwDir, nz)
-    magnitude = np.sqrt(flwDir[0]**2 + flwDir[1]**2 + nz**2)
-    flwDir = flwDir / magnitude
+    flwDir = DFAtls.normalize(flwDir[0], flwDir[1], nz)
+    flwDir = np.array(flwDir)
 
     return flwDir
+
 
 def assignRelFlowTh(crossSection, ratingCurve, releaseThickness):
     """
@@ -533,7 +584,7 @@ def assignRelFlowTh(crossSection, ratingCurve, releaseThickness):
         the elevation of the cross-section cells,
         the path along (distance) along the cross-section cells
     ratingCurve: dict
-        dictionary containing the miminimum elevation of cross section (channel)
+        dictionary containing the minimum elevation of cross section (channel)
     releaseThickness: 1D-array
         array containing the release thickness values for each discharge value
 
@@ -550,7 +601,7 @@ def assignRelFlowTh(crossSection, ratingCurve, releaseThickness):
     minElev = ratingCurve["minElevation"]
 
     # only consider cross section between levee points
-    elevation = elevation[min(idLevee):max(idLevee) + 1]
+    elevation = elevation[min(idLevee) : max(idLevee) + 1]
 
     # identify wet cells
     # any cell that lies below debris-flow surface table is considered as wet
@@ -560,24 +611,22 @@ def assignRelFlowTh(crossSection, ratingCurve, releaseThickness):
 
     for th in releaseThickness:
         # get surface level
-        surfLev = minElev + th
+        surfElev = minElev + th
         # find indices of cells that are equal to or lie below surface level
-        idx = np.where(elevation <= surfLev)[0]
+        idx = np.where(elevation <= surfElev)[0]
         # get cell flow thicknesses
         elev = elevation[idx]
-        thickCells = np.round(surfLev - elev, decimals=2)
+        thickCells = np.round(surfElev - elev, decimals=2)
         thicknessCells.append(thickCells)
         # get x,y-coordinates of wet cells
         idx = min(idLevee) + idx
         wetXcoords.append(xCoords[idx])
         wetYcoords.append(yCoords[idx])
 
-    wetCells = {"thicknessCells": thicknessCells,
-                "wetXcoords": wetXcoords,
-                "wetYcoords": wetYcoords
-                }
-    
+    wetCells = {"thicknessCells": thicknessCells, "wetXcoords": wetXcoords, "wetYcoords": wetYcoords}
+
     return wetCells
+
 
 def plotCrossSection(crossSection, outputDir):
     """
@@ -589,7 +638,7 @@ def plotCrossSection(crossSection, outputDir):
         dictionary containing
         the elevation of the cross-section cells and levee points,
         the path along (distance) along the cross-section cells
-    outDir: str or Path
+    outputDir: str or Path
         path to output directory of in2TopoHyd module
 
     Returns
@@ -599,13 +648,13 @@ def plotCrossSection(crossSection, outputDir):
     """
 
     # plot cross section
-    fig, ax = plt.subplots(figsize=(10,8))
+    fig, ax = plt.subplots(figsize=(10, 8))
 
     ax.plot(crossSection["s"], crossSection["elevation"])
-    ax.scatter(crossSection["sLevee"], crossSection["elevLevee"], color = "red", label = "Levee points")
+    ax.scatter(crossSection["sLevee"], crossSection["elevLevee"], color="red", label="Levee points")
     ax.set_xlabel("distance [m]"), ax.set_ylabel("elevation [m]")
     ax.grid(color="gray", linestyle="--", linewidth=0.5, alpha=0.6)
-    ax.set_title('Cross Section')
+    ax.set_title("Cross Section")
 
     plt.legend()
     plt.tight_layout()
@@ -648,20 +697,22 @@ def plotRatingCurve(ratingCurve, crossSection, outputDir):
     xmax = ratingCurve["xmax"]
 
     # plot cross section
-    fig, ax = plt.subplots(ncols=1, nrows=2, figsize=(10,8))
+    fig, ax = plt.subplots(ncols=1, nrows=2, figsize=(10, 8))
 
     ax[0].plot(crossSection["s"], crossSection["elevation"])
-    ax[0].scatter(crossSection["sLevee"], crossSection["elevLevee"], color = "red", label = "Levee points")
-    ax[0].hlines(surfElev, xmin=xmin,xmax=xmax,linestyles='--', colors='grey', lw = 0.5, label = "elevation increments")
+    ax[0].scatter(crossSection["sLevee"], crossSection["elevLevee"], color="red", label="Levee points")
+    ax[0].hlines(
+        surfElev, xmin=xmin, xmax=xmax, linestyles="--", colors="grey", lw=0.5, label="elevation increments"
+    )
     ax[0].set_xlabel("distance [m]"), ax[0].set_ylabel("elevation [m]")
     ax[0].grid(color="gray", linestyle="--", linewidth=0.5, alpha=0.6)
-    ax[0].set_title('Cross Section')
+    ax[0].set_title("Cross Section")
     ax[0].legend()
 
-    ax[1].plot(thickness,flowArea)
-    ax[1].set_xlabel('flow thickness [m]'), ax[1].set_ylabel('flow area [m²]')
+    ax[1].plot(thickness, flowArea)
+    ax[1].set_xlabel("flow thickness [m]"), ax[1].set_ylabel("flow area [m²]")
     ax[1].grid(color="gray", linestyle="--", linewidth=0.5, alpha=0.6)
-    ax[1].set_title('Rating Curve')
+    ax[1].set_title("Rating Curve")
 
     plt.tight_layout()
 
@@ -681,20 +732,20 @@ def in2TopoHydMain(debrisDir, topoHydCfg, debrisCfg):
         configuration file for the in2TopoHyd-module
     debrisCfg: configparser.ConfigParser
             configuration file for the c1TIF-module
-    
+
     Returns
     --------
     csv-file with initial conditions at the release line
     Plots of cross section and rating curve
     cross-section cell centers as csv-file - optional
-            
+
     """
 
     # create output directory
     outputDir = pathlib.Path(debrisDir, "Outputs", "in2TopoHyd")
     fU.makeADir(outputDir)
 
-    #+++ 1. read input data
+    # +++ 1. read input data
     log.info("Read input data")
 
     # get dem
@@ -702,27 +753,8 @@ def in2TopoHydMain(debrisDir, topoHydCfg, debrisCfg):
 
     # get file name of release line
     # first, check if name is provided in the c1TIF-config file
-    fname = debrisCfg["com1DFA_com1DFA_override"]["releaseScenario"]
-
-    if fname:   
-        fname = pathlib.Path(debrisDir, "Inputs", "REL", fname)
-        if not fname.is_file():
-            message = """Missing file! Check if releaseScenario defined in local_c1TIFCfg.ini really exists!
-                         It is necessary to provide the extension .shp for the file name"""
-            log.error(message)
-            raise FileNotFoundError(message)
-    # otherwise take available file in REL-folder
-    else:
-        inputData = gI.getInputDataCom1DFA(debrisDir)
-        relFiles = inputData["relFiles"]
-        if len(relFiles) == 1:
-            fname = relFiles
-        else:
-            message = """File not found or there are more than one release files in REL-folder!
-                         In the latter case, specify a releaseScenario in local_c1TIFCfg.ini!"""
-            log.error(message)
-            raise FileNotFoundError(message)
-        fname = relFiles[0]
+    inputDir = pathlib.Path(debrisDir, "Inputs")
+    fname, *_ = gI.getAndCheckInputFiles(inputDir=inputDir, inputType="cross section", folder="XSECT")
 
     # get release line
     releaseLine = shpConv.readLine(fname, "release1", dem)
@@ -738,21 +770,15 @@ def in2TopoHydMain(debrisDir, topoHydCfg, debrisCfg):
         raise ValueError(message)
 
     # get file name of levee points
-    fname = debrisDir + "/Inputs/POINTS/*levee.shp"
-    fname = glob.glob(fname)
-    if len(fname) != 1:
-        message = """File not found or there are more than one levee files in POINTS-folder!
-                     Ensure that there is exactly one point-shapefile including the ending *levee.shp!"""
-        log.error(message)
-        raise FileNotFoundError(message)
-    fname = fname[0]
+    inputDir = pathlib.Path(debrisDir, "Inputs")
+    fname, *_ = gI.getAndCheckInputFiles(inputDir=inputDir, inputType="Levee", folder="LEVEE")
 
     # get levee points
     leveePoints = shpConv.readLine(fname, "release1", dem)
 
     log.info(f"levee points used: {fname}")
 
-    #+++ 2. get all cells along the release line
+    # +++ 2. get all cells along the release line
     log.info("Get all cells along the release line")
 
     # get cross section cells
@@ -763,64 +789,56 @@ def in2TopoHydMain(debrisDir, topoHydCfg, debrisCfg):
     # assign levee points to neares cross-section coordinates
     crossSection = assignCrossSectionCoords(leveePoints, crossSection)
 
-    # export cross section cell centers as points for plausability check
+    # export cross section cell centers as points for plausibility check
     if topoHydCfg["EXPORTS"].getboolean("exportCrossSectionCells"):
-        file = pd.DataFrame({"x": crossSection["x"],
-                             "y": crossSection["y"],
-                             "elev": crossSection["elevation"]})
+        file = pd.DataFrame(
+            {"x": crossSection["x"], "y": crossSection["y"], "elev": crossSection["elevation"]}
+        )
         path = outputDir / "crossSectionCells.csv"
-        file.to_csv(path,
-                    sep=',',
-                    decimal='.',
-                    header=True,
-                    index=False)
-    
+        file.to_csv(path, sep=",", decimal=".", header=True, index=False)
+
     plotCrossSection(crossSection=crossSection, outputDir=outputDir)
-    
-    #+++ 4. calculate hydraulic boundary conditions
+
+    # +++ 4. calculate hydraulic boundary conditions
     log.info("Calculate hydraulic boundary conditions")
 
     # compute rating curve
     ratingCurve = computeRatingCurve(crossSection, topoHydCfg)
 
-    # plot cross section and rating curve for plausability check
+    # plot cross section and rating curve for plausibility check
     plotRatingCurve(ratingCurve=ratingCurve, crossSection=crossSection, outputDir=outputDir)
 
     # compute release flow thicknesses and velocities
     # get file name of hydrograph
-    inputData = gI.getInputDataCom1DFA(debrisDir)
-    fname = inputData["timeDepRelCsv"]
-    if len(fname) != 1:
-        message = """File not found or there are more than one hydrograph files in REL-folder!
-                     Ensure that there is only one csv-file in the REL-folder"""
-        log.error(message)
-        raise FileNotFoundError(message)
-    fname = fname[0]
+    fname, *_ = gI.getAndCheckInputFiles(
+        inputDir=inputDir, folder="HYDR", inputType="Hydrograph", fileExt="csv"
+    )
     # read hydrograph
-    hydrograph = pd.read_csv(fname,
-                             sep=",",
-                             decimal=".",
-                             header=0)
+    hydrograph = pd.read_csv(fname, sep=",", decimal=".", header=0)
     discharge = np.array(hydrograph["discharge"])
     timestep = np.array(hydrograph["timestep"])
 
+    log.info(f"hydrograph used: {fname}")
+
     # get release flow thicknesses and velocities
-    relTh, vel = computeRelFlowThVel(discharge, topoHydCfg, ratingCurve=ratingCurve, dem=dem, crossSection=crossSection)
+    relTh, vel = computeRelFlowThVel(
+        discharge, topoHydCfg, ratingCurve=ratingCurve, dem=dem, crossSection=crossSection
+    )
 
     # distribute mean flow thickness over wetted cells
     wetCells = assignRelFlowTh(crossSection, ratingCurve, relTh)
 
-    #+++ 5. get flow direction
+    # +++ 5. get flow direction
     log.info("Get flow direction")
 
     # normal to release line
     # Vx, Vy, Vz -> vel magnitude multiplied by unit vector of direction
-    flwDirection = getFlowDirection(crossSection=crossSection, dem = dem)
+    flwDirection = getFlowDirection(crossSection=crossSection, dem=dem)
     vx = np.round(vel * flwDirection[0], decimals=2)
     vy = np.round(vel * flwDirection[1], decimals=2)
     vz = np.round(vel * flwDirection[2], decimals=2)
 
-    #+++ 6. export x,y-coords, timesteps, thickness and x,y,z(?)-velocities to csv-file
+    # +++ 6. export x,y-coords, timesteps, thickness and x,y,z(?)-velocities to csv-file
     log.info("Export csv-file")
 
     time = []
@@ -839,23 +857,17 @@ def in2TopoHydMain(debrisDir, topoHydCfg, debrisCfg):
             velz.append(vz[t])
             x.append(wetCells["wetXcoords"][t][j])
             y.append(wetCells["wetYcoords"][t][j])
-                
 
-    output = pd.DataFrame({"timestep": time,
-                  "thickness": th,
-                  "velocityX": velx,
-                  "velocityY": vely,
-                  "velocityZ": velz,
-                  "x": x,
-                  "y": y})
-    
-    output.to_csv(outputDir / "initCondHyd.csv",
-                  sep=",",
-                  decimal=".",
-                  header=True,
-                  index=False)
-    
+    output = pd.DataFrame(
+        {
+            "timestep": time,
+            "thickness": th,
+            "velocityX": velx,
+            "velocityY": vely,
+            "velocityZ": velz,
+            "x": x,
+            "y": y,
+        }
+    )
 
-
-
-
+    output.to_csv(outputDir / "initCondHyd.csv", sep=",", decimal=".", header=True, index=False)
