@@ -133,9 +133,9 @@ folder structure described below.
     NameOfDebrisFlow/
       Inputs/
         DEM raster file
-        CFGs/     - expert configuration files (optional)
-        REL/      - release line
+        HYDR/     - hydrograph csv-file
         LEVEE/    - levee points
+        XSECT/    - release line
       Outputs/
         in2TopoHyd/
           initCondHyd.csv
@@ -198,6 +198,11 @@ The available parameters are:
 * ``slope``
   
   Mean slope in flow direction [m/m]. If this parameter is left empty, the slope is calculated automatically from the DEM.
+
+* ``normalDist``
+
+  Normal distance to release line where two parallel auxiliary cross sections are generated on each side of the release line.
+  Used to calculate the channel slope and the flow direction. If this parameter is left empty, the ``normalDist`` is calculated automatically. 
 
 * ``exportCrossSectionCells``
   
