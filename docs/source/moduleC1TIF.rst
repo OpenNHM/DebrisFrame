@@ -85,6 +85,14 @@ To run
 
     pixi run python runC1TIF.py
 
+Run from hydrograph
+--------
+
+If in ``local_c1TIFCfg.ini`` ``inputHydrograph`` is set to ``True``, the :py:mod:`c1TIF` input data is computed from
+a hydrograph by executing the :ref:`moduleIn2TopoHyd:in2TopoHyd: Initial Hydraulic Conditions Module` module.
+From in2TopoHyd :ref:`moduleIn2TopoHyd:Output`, the resulting time dependent release (csv) file is copied into the
+``Inputs/REL`` directory for the :py:mod:`c1TIF` simulation.
+
 
 Theory
 --------
