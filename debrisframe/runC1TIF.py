@@ -28,6 +28,9 @@ def runC1TIF(debrisDir="", inHydr=False):
     ----------
     debrisDir: str
         path to debris flow directory (setup e.g. with init scripts)
+    inHydr: bool
+        if inHydr is True, the initial conditions for c1TIF
+        are computed from a hydrograph first by executing in2TopoHyd
 
     Returns
     -------
@@ -70,7 +73,7 @@ def runC1TIF(debrisDir="", inHydr=False):
     if inHydr:
         DebrisCfg["GENERAL"]["inputHydrograph"] = "True"
     else:
-        inHydr = DebrisCfg["GENERAL"]["inputHydrograph"]
+        inHydr = DebrisCfg["GENERAL"].getboolean("inputHydrograph")
 
     if inHydr:
         # TODO: put this in an separate function? -> where?
@@ -122,10 +125,10 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "-inHydr",
-        "--input_hydrograph",
+        "--inputHydrograph",
         action="store_true",
         help="If set, input data is computed from a hydrograph. "
              + "If omitted, the default/ini configuration is used."
     )
     args = parser.parse_args()
-    runC1TIF(str(args.debrisdir), str(args.input_hydrograph))
+    runC1TIF(str(args.debrisdir), args.input_hydrograph)
