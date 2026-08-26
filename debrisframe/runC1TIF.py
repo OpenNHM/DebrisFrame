@@ -131,4 +131,4 @@ if __name__ == "__main__":
              + "If omitted, the default/ini configuration is used."
     )
     args = parser.parse_args()
-    runC1TIF(str(args.debrisdir), args.input_hydrograph)
+    runC1TIF(str(args.debrisdir), args.inputHydrograph)
