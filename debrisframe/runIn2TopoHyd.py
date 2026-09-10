@@ -13,7 +13,6 @@ from avaframe.in3Utils import logUtils
 
 # import computation modules
 import debrisframe as debf
-from debrisframe.c1TIF import c1TIF
 from debrisframe.in2TopoHyd import in2TopoHyd
 
 
@@ -57,12 +56,10 @@ def runIn2TopoHyd(debrisDir=""):
     # load module config
     # topoHydCfg
     topoHydCfg = cfgUtils.getModuleConfig(in2TopoHyd, debrisDir, toPrint=False)
-    # c1TIF
-    debrisCfg = cfgUtils.getModuleConfig(c1TIF, debrisDir, toPrint=False)
 
     # ----------------
     # Run in2TopoHyd
-    in2TopoHyd.in2TopoHydMain(debrisDir, topoHydCfg, debrisCfg)
+    in2TopoHyd.in2TopoHydMain(debrisDir, topoHydCfg)
 
     # Print time needed
     endTime = time.time()
@@ -81,6 +78,6 @@ if __name__ == "__main__":
         default="",
         help="the avalanche/ debris directory",
     )
-    print(parser)
+
     args = parser.parse_args()
     runIn2TopoHyd(str(args.debrisdir))

@@ -93,7 +93,7 @@ def runC1TIF(debrisDir="", inHydr=False):
             in2TopoHydCfg, DebrisCfg, in2TopoHyd, addModValues=False
         )
 
-        in2TopoHyd.in2TopoHydMain(debrisDir, in2TopoHydCfg, DebrisCfg)
+        in2TopoHyd.in2TopoHydMain(debrisDir, in2TopoHydCfg)
 
         # copy in2TopoHyd output into Inputs folder for c1TIF
         fileUtils.copyHydrToInput(debrisDir)
