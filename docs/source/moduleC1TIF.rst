@@ -53,7 +53,7 @@ Model configuration
 --------------------
 The model configuration is read from a configuration file: ``c1TIF/c1TIFCfg.ini``. In this file,
 all model parameters are listed and can be modified. These parameters overwrite the respective parameters
-of AvaFrame's `com1DFACfg.ini` configuration file. We recommend to create a local copy
+of AvaFrame's ``com1DFACfg.ini`` and DebrisFrame's ``in2TopoHydCfg.ini`` configuration file. We recommend to create a local copy
 and keep the default configuration in ``c1TIF/c1TIFCfg.ini`` untouched.
 For this purpose, in ``DebrisFrame/debrisframe/`` run:
 
