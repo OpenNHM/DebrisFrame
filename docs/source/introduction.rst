@@ -20,7 +20,8 @@ Here is what makes it stand out:
 Our mission? To create a platform that is not only operationally relevant for Austria but also adaptable for global applications. 
 Whether you are tackling debris flows in the Alps or beyond, DebrisFrame is built to evolve with the latest research and your specific needs. 
 
-DebrisFrame is currently in an early development phase and new developments will be published soon. 
+.. Note::
+    DebrisFrame is currently in an early development phase and new developments will be published soon. 
 
 
 *DebrisFrame is a cooperation between the Austrian Avalanche and Torrent Service (Wildbach- und Lawinenverbauung; WLV), 

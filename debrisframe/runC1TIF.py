@@ -10,21 +10,27 @@ import argparse
 # import config and init tools
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
+from avaframe.in3Utils import cfgHandling
 import avaframe.in3Utils.initializeProject as initProj
 from avaframe.in3Utils import fileHandlerUtils as fU
 
 # import computation modules
 import debrisframe as debf
 from debrisframe.c1TIF import c1TIF
+from debrisframe.in2TopoHyd import in2TopoHyd
+from debrisframe.in1Utils import fileUtils
 
 
-def runC1TIF(debrisDir=""):
+def runC1TIF(debrisDir="", inHydr=False):
     """Run com1DFA with debris flow parameters with only an avalanche/ debris flow directory as input
 
     Parameters
     ----------
     debrisDir: str
         path to debris flow directory (setup e.g. with init scripts)
+    inHydr: bool
+        if inHydr is True, the initial conditions for c1TIF
+        are computed from a hydrograph first by executing in2TopoHyd
 
     Returns
     -------
@@ -61,6 +67,37 @@ def runC1TIF(debrisDir=""):
     # load debris flow config
     DebrisCfg = cfgUtils.getModuleConfig(c1TIF)
 
+    # ---------------------
+    # check if in2TopoHyd computes input data for c1TIF
+    # TODO: should we also override the flag, in Expert mode?
+    if inHydr:
+        DebrisCfg["GENERAL"]["inputHydrograph"] = "True"
+    else:
+        inHydr = DebrisCfg["GENERAL"].getboolean("inputHydrograph")
+
+    if inHydr:
+        # TODO: put this in an separate function? -> where?
+        if DebrisCfg["com1DFA_com1DFA_override"].getboolean("timeDependentRelease") is False:
+            message = "If input data are computed from hydrograph, timeDependentRelease needs to be set to True."
+            log.error(message)
+            raise ValueError(message)
+
+        in2TopoHydCfg = cfgUtils.getModuleConfig(
+            in2TopoHyd,
+            fileOverride="",
+            modInfo=False,
+            toPrint=False,
+            onlyDefault=DebrisCfg["in2TopoHyd_in2TopoHyd_override"].getboolean("defaultConfig"),
+        )
+        in2TopoHydCfg, debrisCfg = cfgHandling.applyCfgOverride(
+            in2TopoHydCfg, DebrisCfg, in2TopoHyd, addModValues=False
+        )
+
+        in2TopoHyd.in2TopoHydMain(debrisDir, in2TopoHydCfg)
+
+        # copy in2TopoHyd output into Inputs folder for c1TIF
+        fileUtils.copyHydrToInput(debrisDir)
+
     # perform com1DFA simulation with debris flow settings
     _, plotDict, reportDictList, _ = c1TIF.c1TIFMain(cfgMain, DebrisCfg)
 
@@ -86,6 +123,12 @@ if __name__ == "__main__":
         default="",
         help="the avalanche/ debris directory",
     )
-    print(parser)
+    parser.add_argument(
+        "-inHydr",
+        "--inputHydrograph",
+        action="store_true",
+        help="If set, input data is computed from a hydrograph. "
+             + "If omitted, the default/ini configuration is used."
+    )
     args = parser.parse_args()
-    runC1TIF(str(args.debrisdir))
+    runC1TIF(str(args.debrisdir), args.inputHydrograph)
