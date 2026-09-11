@@ -81,8 +81,10 @@ Once the mean velocity is known, the required flow area :math:`A` [m²] is obtai
 
 The required flow area is then compared with the previously calculated rating curve and
 the flow thickness corresponding to the required flow area is obtained by interpolation of the rating curve.
-If the required flow area exceeds the maximum flow area represented by the rating curve,
-the module stops and reports that the discharge is overtopping the debris-flow channel.
+
+.. Note::
+  If the required flow area exceeds the maximum flow area represented by the rating curve,
+  the module stops and reports that the discharge is overtopping the debris-flow channel.
 
 6. Distribution over the release cross section
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
