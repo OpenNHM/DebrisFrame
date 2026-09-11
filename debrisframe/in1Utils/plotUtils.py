@@ -63,7 +63,7 @@ def plotRatingCurve(ratingCurve, crossSection, outputDir):
             dictionary containing
             the elevation of the cross-section cells,
             the path along (distance) along the cross-section cells
-    outDir: str or Path
+    outputDir: str or Path
             path to output directory of in2TopoHyd module
 
     Returns
@@ -83,21 +83,30 @@ def plotRatingCurve(ratingCurve, crossSection, outputDir):
 
     ax[0].plot(crossSection["s"], crossSection["elevation"])
     ax[0].scatter(crossSection["sLevee"], crossSection["elevLevee"], color="red", label="Levee points")
-    ax[0].hlines(
-        surfElev, xmin=xmin, xmax=xmax, linestyles="--", colors="grey", lw=0.5, label="elevation increments"
-    )
+    for i, (elev, minimum, maximum) in enumerate(zip(surfElev, xmin, xmax)):
+        elev = [elev] * len(minimum)
+        ax[0].hlines(
+            elev,
+            xmin=minimum,
+            xmax=maximum,
+            linestyles="--",
+            colors="black",
+            lw=0.5,
+            label="elevation increments" if i == 0 else "_nolegend_",
+        )
     ax[0].set_xlabel("distance [m]"), ax[0].set_ylabel("elevation [m]")
     ax[0].grid(color="gray", linestyle="--", linewidth=0.5, alpha=0.6)
     ax[0].set_title("Cross Section")
     ax[0].legend()
 
-    ax[1].plot(thickness, flowArea)
-    ax[1].set_xlabel("flow thickness [m]")
-    ax[1].set_ylabel("flow area [m²]")
+    ax[1].plot(flowArea, thickness)
+    ax[1].set_xlabel("flow area [m²]")
+    ax[1].set_ylabel("flow thickness [m]")
     ax[1].grid(color="gray", linestyle="--", linewidth=0.5, alpha=0.6)
     ax[1].set_title("Rating Curve")
 
     plt.tight_layout()
 
-    path = outputDir / "Plots" / "ratingCurve.png"
-    fig.savefig(path)
+    path = outputDir / "Plots"
+    fU.makeADir(path)
+    fig.savefig(path / "ratingCurve.png")

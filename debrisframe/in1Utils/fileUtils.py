@@ -5,6 +5,7 @@ Directory and file handling helper functions
 import pathlib
 import shutil
 import logging
+import pandas as pd
 
 log = logging.getLogger("avaframe.debrisframe.in1Utils.fileUtils")
 
@@ -28,8 +29,15 @@ def copyHydrToInput(debrisDir):
 
     inputsHydFile = inputsDir / outputFile.name
 
-    # TODO: How should we handle if the file already exists?
-    if inputsHydFile.exists():
-        raise FileExistsError(f"File already exists: {inputsHydFile}")
+    if not inputsHydFile.exists():
+        shutil.copy2(outputFile, inputsHydFile)
+    else:
+        outputFileDF = pd.read_csv(outputFile)
+        inputsHydFileDF = pd.read_csv(inputsHydFile)
 
-    shutil.copy2(outputFile, inputsHydFile)
+        if not outputFileDF.equals(inputsHydFileDF):
+            log.info(f"{inputsHydFile} already exists and is inconsistent with {outputFile}.")
+            log.info(f"{inputsHydFile} is overwritten by {outputFile}!")
+            shutil.copy2(outputFile, inputsHydFile)
+        else:
+            log.info(f"{inputsHydFile} already exists and is consistent with {outputFile}")

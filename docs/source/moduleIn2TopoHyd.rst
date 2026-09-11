@@ -81,8 +81,10 @@ Once the mean velocity is known, the required flow area :math:`A` [m²] is obtai
 
 The required flow area is then compared with the previously calculated rating curve and
 the flow thickness corresponding to the required flow area is obtained by interpolation of the rating curve.
-If the required flow area exceeds the maximum flow area represented by the rating curve,
-the module stops and reports that the discharge is overtopping the debris-flow channel.
+
+.. Note::
+  If the required flow area exceeds the maximum flow area represented by the rating curve,
+  the module stops and reports that the discharge is overtopping the debris-flow channel.
 
 6. Distribution over the release cross section
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -101,7 +103,7 @@ rather than assigning one constant thickness to every cell.
 7. Flow direction
 ^^^^^^^^^^^^^^
 
-The flow direction is by defintion perpendicular to the release line.
+The flow direction is by definition perpendicular to the release line.
 
 .. Note::
   It is in the responsibility of the user to create a release line normal to the channel flow direction!
@@ -156,9 +158,8 @@ The DEM cell size and raster origin are also used to map the release line to ras
 Release line
 ^^^^^^^^^^^^
 
-The release line is read from the ``Inputs/REL`` directory. It must contain **exactly two points**, representing the starting and ending point of the release line.
-If a ``releaseScenario`` is specified in ``(local_)c1TIFCfg.ini``, this file is used (**with** extension .shp). Otherwise, the module searches the ``REL`` directory for a release file.
-If no unique release file can be identified, the module stops with an error.
+The release line is read from the ``Inputs/XSECT`` directory. It must contain **exactly two points**, representing the starting and ending point of the release line.
+The module searches the ``XSECT`` directory for a release shapefile. If no unique release file can be identified, the module stops with an error.
 The release line defines the terrain cross section used for the hydraulic calculations.
 
 Levee points
@@ -170,7 +171,7 @@ The levee points define the lateral limits of the debris-flow channel. Each leve
 Discharge hydrograph
 ^^^^^^^^^^^^^^^^^^^^
 
-The time-dependent discharge is read from the hydrograph file (.csv) in ``Inputs/REL``.
+The time-dependent discharge is read from the hydrograph file (.csv) in ``Inputs/HYDR``.
 
 The hydrograph must contain the columns:
 
