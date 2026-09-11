@@ -12,6 +12,7 @@ from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 
 # import computation modules
+from debrisframe.c1TIF import c1TIF
 import debrisframe as debf
 from debrisframe.in2TopoHyd import in2TopoHyd
 
@@ -53,13 +54,16 @@ def runIn2TopoHyd(debrisDir=""):
     log.info("MAIN SCRIPT")
     log.info("Current debris flow: %s", debrisDir)
 
+    # load debris flow config
+    DebrisCfg = cfgUtils.getModuleConfig(c1TIF)
+
     # load module config
     # topoHydCfg
     topoHydCfg = cfgUtils.getModuleConfig(in2TopoHyd, debrisDir, toPrint=False)
 
     # ----------------
     # Run in2TopoHyd
-    in2TopoHyd.in2TopoHydMain(debrisDir, topoHydCfg)
+    in2TopoHyd.in2TopoHydMain(debrisDir, topoHydCfg, DebrisCfg)
 
     # Print time needed
     endTime = time.time()

@@ -6,6 +6,7 @@ Get initial conditions for hydrograph
 import pathlib
 import math
 import logging
+import configparser
 import numpy as np
 import pandas as pd
 
@@ -50,9 +51,7 @@ def assignCrossSectionCoords(leveePoints, crossSection):
         diffX = crossSection["x"] - x
         diffY = crossSection["y"] - y
         dist = np.sqrt(diffX * diffX + diffY * diffY)
-        id = min(dist)
-        id = np.where(dist == id)
-        idPoint.append(id[0][0])
+        idPoint.append(np.argmin(dist))
 
     xLevee = crossSection["x"][idPoint]
     yLevee = crossSection["y"][idPoint]
@@ -74,7 +73,7 @@ def assignCrossSectionCoords(leveePoints, crossSection):
     return crossSection
 
 
-def assignRasterCoords(cellSize, releaseLine):
+def assignRasterCoords(cellSize, xllcenter, yllcenter, releaseLine):
     """
     Assign nearest raster coordinates to the release line
 
@@ -82,6 +81,10 @@ def assignRasterCoords(cellSize, releaseLine):
     -----------
     cellSize: int
         dem cell size
+    xllcenter: float
+        x-coordinate of the dem origin (cell center)
+    yllcenter: float
+        y-coordinate of the dem origin (cell center)
     releaseLine: dict
         dictionary including starting and ending point of release line
 
@@ -92,19 +95,12 @@ def assignRasterCoords(cellSize, releaseLine):
     """
 
     # assign raster cell coord to starting and ending point of release line
+    # snap relative to cell centers, not to global multiples of the cell size
     xcoord = []
     ycoord = []
     for x, y in zip(releaseLine["x"], releaseLine["y"]):
-        dx = x % cellSize
-        dy = y % cellSize
-        if dx < cellSize / 2:
-            xcoord.append(x - x % cellSize)
-        else:
-            xcoord.append(x + (cellSize - x % cellSize))
-        if dy < cellSize / 2:
-            ycoord.append(y - y % cellSize)
-        else:
-            ycoord.append(y + (cellSize - y % cellSize))
+        xcoord.append(xllcenter + np.round((x - xllcenter) / cellSize) * cellSize)
+        ycoord.append(yllcenter + np.round((y - yllcenter) / cellSize) * cellSize)
 
     releaseLine["xRaster"] = np.array(xcoord)
     releaseLine["yRaster"] = np.array(ycoord)
@@ -112,7 +108,7 @@ def assignRasterCoords(cellSize, releaseLine):
     return releaseLine
 
 
-def computeSubArea(elevation, distance, surfElev, wetCellIdx, idx):
+def computeSubArea(elevation, distance, surfElev, idLevee, wetCellIdx, idx):
     """
     Computes flow subareas at the boundaries of a wetted cross section
     Handles the first (0) and last element (-1) of an index array
@@ -125,6 +121,8 @@ def computeSubArea(elevation, distance, surfElev, wetCellIdx, idx):
         the path along (distance) along the cross-section cells
     surfElev: float
         surface elevation of debris flow
+    idLevee: 1D-array
+        indices of levee points
     wetCellIdx: 1D-array
         indices of wetted cells
     idx: int
@@ -158,6 +156,9 @@ def computeSubArea(elevation, distance, surfElev, wetCellIdx, idx):
     else:
         dx = th / slope
 
+    if cellIdx in idLevee:
+        dx = 0.0
+
     subArea = 0.5 * th * dx
 
     return subArea, dx
@@ -165,7 +166,7 @@ def computeSubArea(elevation, distance, surfElev, wetCellIdx, idx):
 
 def computeRatingCurve(crossSection, topoHydCfg):
     """
-    compute relation between given discharge and flow thickness
+    compute relation between flow area and flow thickness
     in a given topographic cross section
 
     Parameters
@@ -206,6 +207,13 @@ def computeRatingCurve(crossSection, topoHydCfg):
     # number of iteration steps
     numIt = (np.min(elevLevee) - minElev) / dElev
     numIt = math.floor(numIt)
+    if numIt <= 0:
+        message = (
+            "Channel is flat between the levee points or the levee points do not lie above the "
+            "channel bottom! Cannot compute a rating curve."
+        )
+        log.error(message)
+        raise ValueError(message)
 
     # routine loop: calculate flow area for given flow thickness
     for step in range(1, numIt + 1):
@@ -216,43 +224,67 @@ def computeRatingCurve(crossSection, topoHydCfg):
         # search only in area between the two levee points
         idx = np.where(elevation[min(idLevee) : max(idLevee) + 1] <= surfElev)[0]
         idx = idx + min(idLevee)
+        # find breaking points in elevation array which lie over surfElev due to unevenness of ground
+        idxOver = np.where(np.diff(idx) != 1)[0]
+        # get subarrays between breaking points
+        idxSub = np.split(idx, idxOver + 1)
 
         if len(idx) == 0:
             message = "Debris-flow surface level lies below the lowest channel elevation point!"
             log.error(message)
             raise ValueError(message)
 
-        # np.trapz() only calculates the area between the vertices (cell centers)
-        # if the thickness at the very left and the very right cell is still > 0,
-        # there are remaining subareas on both sides that have to be considered
-        areaLeft, dxLeft = computeSubArea(
-            elevation=elevation, distance=distance, surfElev=surfElev, wetCellIdx=idx, idx=0
-        )
-        areaRight, dxRight = computeSubArea(
-            elevation=elevation, distance=distance, surfElev=surfElev, wetCellIdx=idx, idx=-1
-        )
+        subFlwArea = []
+        subXmin = []
+        subXmax = []
+        # iteration loop over subarrays
+        for sub in idxSub:
 
-        # get cell elevations and distances between cells
-        elev = elevation[idx]
-        dist = distance[idx]
-        # compute flow area
-        thickCells = surfElev - elev
-        # TODO: function np.trapz was changed to np.trapezoid in later numpy versions
-        flowArea.append(np.trapz(np.maximum(thickCells, 0), dist) + np.sum([areaLeft, areaRight]))
+            # np.trapz() only calculates the area between the vertices (cell centers)
+            # if the thickness at the very left and the very right cell is still > 0,
+            # there are remaining subareas on both sides that have to be considered
+            areaLeft, dxLeft = computeSubArea(
+                elevation=elevation,
+                distance=distance,
+                surfElev=surfElev,
+                idLevee=idLevee,
+                wetCellIdx=sub,
+                idx=0,
+            )
+            areaRight, dxRight = computeSubArea(
+                elevation=elevation,
+                distance=distance,
+                surfElev=surfElev,
+                idLevee=idLevee,
+                wetCellIdx=sub,
+                idx=-1,
+            )
+
+            # get cell elevations and distances between cells
+            elev = elevation[sub]
+            dist = distance[sub]
+            # compute flow area
+            thickCells = surfElev - elev
+            # TODO: function np.trapz was changed to np.trapezoid in later numpy versions
+            subFlwArea.append(np.trapz(np.maximum(thickCells, 0), dist) + np.sum([areaLeft, areaRight]))
+            # get xmin and xmax for subarrays; for plotting the elevation increments
+            subXmin.append(np.min(dist) - dxLeft)
+            subXmax.append(np.max(dist) + dxRight)
 
         # save results
+        flowArea.append(np.sum(subFlwArea))
         thickness.append(thick)
         surfaceLevel.append(surfElev)
-        xmin.append(np.min(dist) - dxLeft)
-        xmax.append(np.max(dist) + dxRight)
+        xmin.append(subXmin)
+        xmax.append(subXmax)
 
     ratingCurve = {
         "thickness": np.array(thickness),
         "flowArea": np.array(flowArea),
         "minElevation": minElev,
         "surfElev": np.array(surfaceLevel),
-        "xmin": np.array(xmin),
-        "xmax": np.array(xmax),
+        "xmin": xmin,
+        "xmax": xmax,
     }
 
     return ratingCurve
@@ -393,12 +425,23 @@ def computeRelFlowThVel(discharge, topoHydCfg, ratingCurve, dem, crossSection):
     --------
     thickness: 1D-array
         flow thickness
-    flowVel: 1D-array
+    meanFlowVel: 1D-array
         flow velocity
     """
 
     slope = topoHydCfg["GENERAL"].get("slope", fallback="")
     velType = topoHydCfg["GENERAL"].get("velType", fallback="rickenmann")
+
+    if velType == "":
+        message = "velType not defined!"
+        log.error(message)
+        raise ValueError(message)
+    supportedVelTypes = ("rickenmann",)
+    if velType not in supportedVelTypes:
+        message = f"velType '{velType}' not supported! Supported values: {', '.join(supportedVelTypes)}"
+        log.error(message)
+        raise ValueError(message)
+    # TODO: necessary when fallback is active?
 
     # definition of the average slope of the cross section in flow direction
     if slope == "":
@@ -408,41 +451,42 @@ def computeRelFlowThVel(discharge, topoHydCfg, ratingCurve, dem, crossSection):
 
     log.info(f"chosen slope: {slope:.2f}")
 
-    flowVel = []
-    # compute flow velocity
+    # compute mean flow velocity for every time interval
     if velType == "rickenmann":
         # flow velocity after Rickenmann (1999)
-        for q in discharge:
-            v = 2.1 * math.pow(q, 0.33) * math.pow(slope, 0.33)
-            flowVel.append(v)
-
+        meanFlowVel = [
+            2.1
+            * math.pow(slope, 0.33)
+            * 0.5
+            * (math.pow(discharge[q], 0.33) + math.pow(discharge[q + 1], 0.33))
+            for q in range(len(discharge) - 1)
+        ]
     # TODO: add additional methods for calculating the flow velocity
 
-    else:
-        message = "No velType defined!"
-        log.error(message)
-        raise ValueError(message)
+    meanFlowVel = np.array(meanFlowVel)
 
-    flowVel = np.round(np.array(flowVel), decimals=1)
-
+    # get mean discharge for every time interval
+    meanDischarge = [(discharge[q] + discharge[q + 1]) * 0.5 for q in range(len(discharge) - 1)]
     # calculate corresponding flow area
-    flowArea = discharge / flowVel
+    flowArea = meanDischarge / meanFlowVel
 
     # fetch rating curve
     thicknessRC = ratingCurve["thickness"]
     flowAreaRC = ratingCurve["flowArea"]
     # check if the discharge is overtopping the channel
+    # TODO: allow overtopping
     idx = np.where(flowArea > max(flowAreaRC))[0]
     if len(idx) != 0:
         qOver = min(discharge[idx])
-        message = "Discharge of at least %.02f is overtopping the debris-flow channel!" % qOver
+        message = "Discharge of at least %.02f m³/s is overtopping the debris-flow channel!" % qOver
         log.error(message)
         raise ValueError(message)
     # interpolate start flow thickness
     thickness = np.interp(flowArea, flowAreaRC, thicknessRC)
-    thickness = np.round(thickness, decimals=2)
 
-    return thickness, flowVel
+    meanFlowVel = np.round(meanFlowVel, decimals=1)
+
+    return thickness, meanFlowVel
 
 
 def getCrossSectionCells(dem, releaseLine):
@@ -459,7 +503,7 @@ def getCrossSectionCells(dem, releaseLine):
     Returns
     --------
     crossSection: dict
-        x,y-coordinates and elevation of cells along release line
+        x,y-coordinates, elevation and actual area of cells along release line
         indices of cross-section cells along dem-raster
     """
 
@@ -469,9 +513,11 @@ def getCrossSectionCells(dem, releaseLine):
     csz = dem["header"]["cellsize"]
     # get elevation data
     elevation = dem["rasterData"]
+    # get actual cell area
+    actualArea = dem["areaRaster"]
 
     # assign raster coords to starting and ending point of release line
-    releaseLine = assignRasterCoords(csz, releaseLine)
+    releaseLine = assignRasterCoords(csz, xllcenter, yllcenter, releaseLine)
     xcoordStart = releaseLine["xRaster"][0]
     ycoordStart = releaseLine["yRaster"][0]
     xcoordEnd = releaseLine["xRaster"][1]
@@ -500,10 +546,8 @@ def getCrossSectionCells(dem, releaseLine):
         x = np.insert(x, 0, 0)
         # get y-coords of raster cells
         crossSectionY = dy / dx * x + ycoordStart
-        # get modulus of division by cell size
-        modulus = crossSectionY % csz
-        # round to values that are divisible by cell size
-        crossSectionY = np.where(modulus < csz / 2, crossSectionY - modulus, crossSectionY + (csz - modulus))
+        # snap to nearest cell center, not to global multiples of the cell size
+        crossSectionY = yllcenter + np.round((crossSectionY - yllcenter) / csz) * csz
 
     # get indices of cross-section cells
     col = np.int32(np.round((crossSectionX - xllcenter) / csz))
@@ -511,16 +555,74 @@ def getCrossSectionCells(dem, releaseLine):
     # get elevation of cross-section cells
     elevCrossSection = elevation[row, col]
 
+    # get actual area of cross-section cells
+    cellAreaCrossSection = actualArea[row, col]
+
     crossSectIdx = np.array([row, col])
 
     crossSection = {
         "x": crossSectionX,
         "y": crossSectionY,
         "elevation": elevCrossSection,
+        "actualCellArea": cellAreaCrossSection,
         "crossSectIdx": crossSectIdx,
     }
 
     return crossSection
+
+
+def getDEMRaster(debrisDir, debrisCfg):
+    """
+    Reads DEM data (ascii or tif) from a provided debris-flow directory.
+
+    Parameters
+    -----------
+    debrisDir: str or pathlib path
+        path to debris-flow directory
+    debrisCfg: configparser.ConfigParser
+        configuration file for the c1TIF-module
+
+    Returns
+    --------
+    dem: dict
+        dict with header, raster data and cell areas
+
+    """
+
+    # read DEM from debris-flow directory path
+    dem = gI.readDEM(debrisDir)
+    cellsize = dem["header"]["cellsize"]
+    meshCellSize = debrisCfg.getfloat("com1DFA_com1DFA_override", "meshCellSize")
+    # check if desired mesh cell sizes matches the cell size of the actual DEM
+    if cellsize != meshCellSize:
+        # TODO: get fallback values from default config file?
+        # get parameters
+        meshCellSizeThreshold = debrisCfg["com1DFA_com1DFA_override"].get(
+            "meshCellSizeThreshold", fallback="0.001"
+        )
+        remeshInterpMethod = debrisCfg["com1DFA_com1DFA_override"].get(
+            "remeshInterpMethod", fallback="default"
+        )
+        cfgRaster = configparser.ConfigParser()
+        cfgRaster["GENERAL"] = {
+            "meshCellSize": meshCellSize,
+            "meshCellSizeThreshold": meshCellSizeThreshold,
+            "remeshInterpMethod": remeshInterpMethod,
+            "avalancheDir": debrisDir,
+        }
+        # remesh DEM
+        rasterPath = gI.getDEMPath(debrisDir)
+        rasterPath = geoTrans.remeshRaster(rasterPath, cfgRaster)
+        dem = gI.initializeDEM(debrisDir, rasterPath)
+
+        log.info(f"DEM used: {rasterPath}")
+    else:
+        log.info(f"DEM used: {gI.getDEMPath(debrisDir)}")
+    # get actual cell area
+    dem = geoTrans.getNormalMesh(dem, 4)
+    dem = DFAtls.getAreaMesh(dem, 4)
+
+    return dem
 
 
 def getFlowDirection(crossSection, dem, topoHydCfg):
@@ -538,7 +640,6 @@ def getFlowDirection(crossSection, dem, topoHydCfg):
         elevation raster data
     topoHydCfg: configparser object
         configuration settings for the in2TopoHyd-module
-
 
     Returns
     --------
@@ -582,11 +683,105 @@ def getFlowDirection(crossSection, dem, topoHydCfg):
     return flwDir
 
 
-def assignRelFlowTh(crossSection, ratingCurve, releaseThickness):
+def getHydrograph(inputDir):
     """
-    This function assigns a release flow thickness to any wet cell
-    Starting from the lowest point of the channel (releaseThickness),
-    the corresponding thicknesses are assigned to the other wet cells.
+    Reads data from input hydrograph csv-file.
+
+    Parameters
+    -----------
+    inputDir: pathlib path
+        path to debrisDir/Inputs
+
+    Returns
+    --------
+    hydrograph: dict
+        dict with timestep, discharge and release volume
+    """
+
+    # get file name of hydrograph
+    fname, *_ = gI.getAndCheckInputFiles(
+        inputDir=inputDir, folder="HYDR", inputType="Hydrograph", fileExt="csv"
+    )
+    if fname is None:
+        message = "No hydrograph csv-file in Inputs/HYDR!"
+        log.error(message)
+        raise FileNotFoundError(message)
+
+    # read hydrograph from csv
+    hydrograph = pd.read_csv(fname, sep=",", decimal=".", header=0)
+    discharge = np.array(hydrograph["discharge"])
+    timestep = np.array(hydrograph["timestep"])
+    # check if time steps are equidistant
+    dt = np.unique(np.diff(timestep))
+    if len(dt) != 1:
+        message = "time interval of hydrograph is not uniform!"
+        log.error(message)
+        raise ValueError(message)
+    # get release volume for every time step
+    relVol = [float((discharge[t + 1] + discharge[t]) * 0.5 * dt[0]) for t in range(len(timestep) - 1)]
+    relVol = np.array(relVol)
+
+    # create dictionary
+    hydrograph = {}
+    hydrograph["timestep"] = timestep
+    hydrograph["discharge"] = discharge
+    hydrograph["relVol"] = relVol
+
+    log.info(f"hydrograph used: {fname}")
+
+    return hydrograph
+
+
+def getInputShapeFiles(inputDir, folder, fileType, dem):
+    """
+    Reads release line and levee point data from input shapefiles
+
+    Parameters
+    -----------
+    inputDir: pathlib path
+        path to debrisDir/Inputs
+    folder: str
+        name of folder where the shapefile is located
+    fileType: str
+        "Release line" or "Levee points"
+    dem: dict
+        dem dictionary
+
+    Returns
+    --------
+    Line : dict
+        Line['Name'] : list of lines names
+        Line['Coord'] : np array of the coords of points in lines
+        Line['Start'] : list of starting index of each line in Coord
+        Line['Length'] : list of length of each line in Coord
+    """
+
+    # get file name
+    fname, *_ = gI.getAndCheckInputFiles(inputDir=inputDir, inputType=fileType, folder=folder)
+    if fname is None:
+        message = f"No {fileType} shp-file in Inputs/{folder}!"
+        log.error(message)
+        raise FileNotFoundError(message)
+
+    # get release line
+    shapeFile = shpConv.readLine(fname, "release1", dem)
+
+    # fetch number of points
+    nPoints = len(shapeFile["x"])
+    # check if shapefile includes only two points: starting and ending point
+    if nPoints != 2:
+        message = f"{fileType} consists of more/less than 2 points! Only starting and ending point allowed!"
+        log.error(message)
+        raise ValueError(message)
+
+    log.info(f"{fileType} used: {fname}")
+
+    return shapeFile
+
+
+def assignToWetCell(crossSection, dem, ratingCurve, releaseThickness, releaseVolume):
+    """
+    This function assigns release flow thickness and release volumina to any wet cell
 
     Parameters
     -----------
@@ -594,22 +789,28 @@ def assignRelFlowTh(crossSection, ratingCurve, releaseThickness):
         dictionary containing x,y-coordinates of cross-section cells,
         the elevation of the cross-section cells,
         the path along (distance) along the cross-section cells
+    dem: dict
+        elevation raster data
     ratingCurve: dict
         dictionary containing the minimum elevation of cross section (channel)
     releaseThickness: 1D-array
         array containing the release thickness values for each discharge value
+    releaseVolume: 1D-array
+        array containing the release volume values for each discharge value
 
     Returns
     --------
     wetCells: dict
-        dictionary containing x,y-coordinates and thicknesses for any wet cell
+        dictionary containing x,y-coordinates, thicknesses and release volumina for any wet cell
     """
 
     xCoords = crossSection["x"]
     yCoords = crossSection["y"]
     elevation = crossSection["elevation"]
     idLevee = crossSection["idLevee"]
+    actCellArea = crossSection["actualCellArea"]
     minElev = ratingCurve["minElevation"]
+    csz = dem["header"]["cellsize"]
 
     # only consider cross section between levee points
     elevation = elevation[min(idLevee) : max(idLevee) + 1]
@@ -617,29 +818,50 @@ def assignRelFlowTh(crossSection, ratingCurve, releaseThickness):
     # identify wet cells
     # any cell that lies below debris-flow surface table is considered as wet
     thicknessCells = []
+    relVol = []
     wetXcoords = []
     wetYcoords = []
+    thicknessCellsVol = []
 
-    for th in releaseThickness:
+    for i, th in enumerate(releaseThickness):
         # get surface level
         surfElev = minElev + th
         # find indices of cells that are equal to or lie below surface level
-        idx = np.where(elevation <= surfElev)[0]
+        idx = np.where(elevation < surfElev)[0]
         # get cell flow thicknesses
         elev = elevation[idx]
-        thickCells = np.round(surfElev - elev, decimals=2)
+        # thickCells = np.round(surfElev - elev, decimals=2)
+        thickCells = surfElev - elev
         thicknessCells.append(thickCells)
-        # get x,y-coordinates of wet cells
+        # distribute release volumina due to the cells area proportions
+        # get sub-flow areas
         idx = min(idLevee) + idx
+        subAreas = thickCells * csz
+        # compute area proportions
+        coeff = subAreas / np.sum(subAreas)
+        # distribute release volumina
+        # volume = np.round(releaseVolume[i] * coeff, decimals=2)
+        volume = releaseVolume[i] * coeff
+        relVol.append(volume)
+        # distribute thickness calculated from cell area and cell volume
+        thickCellsVol = volume / (actCellArea[idx])
+        thicknessCellsVol.append(thickCellsVol)
+        # get x,y-coordinates of wet cells
         wetXcoords.append(xCoords[idx])
         wetYcoords.append(yCoords[idx])
 
-    wetCells = {"thicknessCells": thicknessCells, "wetXcoords": wetXcoords, "wetYcoords": wetYcoords}
+    wetCells = {
+        "thicknessCells": thicknessCells,
+        "releaseVolume": relVol,
+        "wetXcoords": wetXcoords,
+        "wetYcoords": wetYcoords,
+        "thicknessCellsVol": thicknessCellsVol,
+    }
 
     return wetCells
 
 
-def in2TopoHydMain(debrisDir, topoHydCfg):
+def in2TopoHydMain(debrisDir, topoHydCfg, debrisCfg):
     """
     Main script to get the initial conditions for a release line as a csv-file
 
@@ -660,6 +882,9 @@ def in2TopoHydMain(debrisDir, topoHydCfg):
 
     """
 
+    # TODO: # Clean input directory(ies) of old work files?
+    # initProj.cleanSingleAvaDir(debrisDir, deleteOutput=False)
+
     # create output directory
     outputDir = pathlib.Path(debrisDir, "Outputs", "in2TopoHyd")
     fU.makeADir(outputDir)
@@ -668,34 +893,12 @@ def in2TopoHydMain(debrisDir, topoHydCfg):
     log.info("Read input data")
 
     # get dem
-    dem = gI.initializeDEM(debrisDir)
+    dem = getDEMRaster(debrisDir, debrisCfg)
 
-    # get file name of release line
-    # first, check if name is provided in the c1TIF-config file
+    # get release line and levee points
     inputDir = pathlib.Path(debrisDir, "Inputs")
-    fname, *_ = gI.getAndCheckInputFiles(inputDir=inputDir, inputType="cross section", folder="XSECT")
-
-    # get release line
-    releaseLine = shpConv.readLine(fname, "release1", dem)
-
-    log.info(f"release line used: {fname}")
-
-    # fetch number of points
-    nPoints = len(releaseLine["x"])
-    # check if line includes only two points: starting and ending point
-    if nPoints != 2:
-        message = "Release line consists of more/less than 2 points! Only starting and ending point allowed!"
-        log.error(message)
-        raise ValueError(message)
-
-    # get file name of levee points
-    inputDir = pathlib.Path(debrisDir, "Inputs")
-    fname, *_ = gI.getAndCheckInputFiles(inputDir=inputDir, inputType="Levee", folder="LEVEE")
-
-    # get levee points
-    leveePoints = shpConv.readLine(fname, "release1", dem)
-
-    log.info(f"levee points used: {fname}")
+    releaseLine = getInputShapeFiles(inputDir=inputDir, folder="XSECT", fileType="Release line", dem=dem)
+    leveePoints = getInputShapeFiles(inputDir=inputDir, folder="LEVEE", fileType="Levee points", dem=dem)
 
     # +++ 2. get all cells along the release line
     log.info("Get all cells along the release line")
@@ -705,7 +908,7 @@ def in2TopoHydMain(debrisDir, topoHydCfg):
     # get distance between cells
     crossSection = geoTrans.computeS(crossSection)
 
-    # assign levee points to neares cross-section coordinates
+    # assign levee points to nearest cross-section coordinates
     crossSection = assignCrossSectionCoords(leveePoints, crossSection)
 
     # export cross section cell centers as points for plausibility check
@@ -727,25 +930,16 @@ def in2TopoHydMain(debrisDir, topoHydCfg):
     # plot cross section and rating curve for plausibility check
     pltUtls.plotRatingCurve(ratingCurve=ratingCurve, crossSection=crossSection, outputDir=outputDir)
 
-    # compute release flow thicknesses and velocities
-    # get file name of hydrograph
-    fname, *_ = gI.getAndCheckInputFiles(
-        inputDir=inputDir, folder="HYDR", inputType="Hydrograph", fileExt="csv"
-    )
-    # read hydrograph
-    hydrograph = pd.read_csv(fname, sep=",", decimal=".", header=0)
-    discharge = np.array(hydrograph["discharge"])
-    timestep = np.array(hydrograph["timestep"])
-
-    log.info(f"hydrograph used: {fname}")
+    # get hydrograph data
+    hydrograph = getHydrograph(inputDir)
 
     # get release flow thicknesses and velocities
     relTh, vel = computeRelFlowThVel(
-        discharge, topoHydCfg, ratingCurve=ratingCurve, dem=dem, crossSection=crossSection
+        hydrograph["discharge"], topoHydCfg, ratingCurve=ratingCurve, dem=dem, crossSection=crossSection
     )
 
-    # distribute mean flow thickness over wetted cells
-    wetCells = assignRelFlowTh(crossSection, ratingCurve, relTh)
+    # distribute flow thickness and release volume over wetted cells
+    wetCells = assignToWetCell(crossSection, dem, ratingCurve, relTh, hydrograph["relVol"])
 
     # +++ 5. get flow direction
     log.info("Get flow direction")
@@ -767,10 +961,10 @@ def in2TopoHydMain(debrisDir, topoHydCfg):
     velz = []
     x = []
     y = []
-    for t, i in enumerate(timestep):
+    for t, i in enumerate(hydrograph["timestep"][:-1]):
         for j in range(len(wetCells["wetXcoords"][t])):
             time.append(i)
-            th.append(wetCells["thicknessCells"][t][j])
+            th.append(wetCells["thicknessCellsVol"][t][j])
             velx.append(vx[t])
             vely.append(vy[t])
             velz.append(vz[t])
