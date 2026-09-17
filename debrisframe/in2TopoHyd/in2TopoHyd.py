@@ -6,6 +6,7 @@ Get initial conditions for hydrograph
 import pathlib
 import math
 import logging
+import configparser
 import numpy as np
 import pandas as pd
 
@@ -660,7 +661,7 @@ def assignToWetCell(crossSection, dem, ratingCurve, releaseThickness, releaseVol
     return wetCells
 
 
-def in2TopoHydMain(debrisDir, topoHydCfg):
+def in2TopoHydMain(debrisDir, topoHydCfg, debrisCfg):
     """
     Main script to get the initial conditions for a release line as a csv-file
 
@@ -689,8 +690,32 @@ def in2TopoHydMain(debrisDir, topoHydCfg):
     log.info("Read input data")
 
     # get dem
-    dem = gI.initializeDEM(debrisDir)
-    # TODO: does not recognize remeshed dem raster! Remeshing vorschalten?
+    dem = gI.readDEM(debrisDir)
+    cellsize = dem["header"]["cellsize"]
+    meshCellSize = debrisCfg.getfloat("com1DFA_com1DFA_override", "meshCellSize")
+
+    if cellsize != meshCellSize:
+        #TODO: get fallback values from default config file?
+        meshCellSizeThreshold = debrisCfg["com1DFA_com1DFA_override"].get(
+            "meshCellSizeThreshold", fallback="0.001"
+        )
+        remeshInterpMethod = debrisCfg["com1DFA_com1DFA_override"].get(
+            "remeshInterpMethod", fallback="default"
+        )
+        cfgRaster = configparser.ConfigParser()
+        cfgRaster["GENERAL"] = {
+            "meshCellSize": meshCellSize,
+            "meshCellSizeThreshold": meshCellSizeThreshold,
+            "remeshInterpMethod": remeshInterpMethod,
+            "avalancheDir": debrisDir,
+        }
+        rasterPath = gI.getDEMPath(debrisDir)
+        rasterPath = geoTrans.remeshRaster(rasterPath, cfgRaster)
+        dem = gI.initializeDEM(debrisDir, rasterPath)
+
+        log.info(f"DEM used: {rasterPath}")
+    else:
+        log.info(f"DEM used: {gI.getDEMPath(debrisDir)}")
 
     # get file name of release line
     # first, check if name is provided in the c1TIF-config file
