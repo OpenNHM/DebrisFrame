@@ -696,6 +696,9 @@ def in2TopoHydMain(debrisDir, topoHydCfg, debrisCfg):
 
     """
 
+    #TODO: # Clean input directory(ies) of old work files?
+    # initProj.cleanSingleAvaDir(debrisDir, deleteOutput=False)
+
     # create output directory
     outputDir = pathlib.Path(debrisDir, "Outputs", "in2TopoHyd")
     fU.makeADir(outputDir)
