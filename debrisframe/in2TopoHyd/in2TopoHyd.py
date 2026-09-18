@@ -217,43 +217,57 @@ def computeRatingCurve(crossSection, topoHydCfg):
         # search only in area between the two levee points
         idx = np.where(elevation[min(idLevee) : max(idLevee) + 1] <= surfElev)[0]
         idx = idx + min(idLevee)
+        # find breaking points in elevation array which lie over surfElev due to unevenness of ground 
+        idxOver = np.where(np.diff(idx) != 1)[0]
+        # get subarrays between breaking points
+        idxSub = np.split(idx, idxOver + 1)
 
         if len(idx) == 0:
             message = "Debris-flow surface level lies below the lowest channel elevation point!"
             log.error(message)
             raise ValueError(message)
 
-        # np.trapz() only calculates the area between the vertices (cell centers)
-        # if the thickness at the very left and the very right cell is still > 0,
-        # there are remaining subareas on both sides that have to be considered
-        areaLeft, dxLeft = computeSubArea(
-            elevation=elevation, distance=distance, surfElev=surfElev, wetCellIdx=idx, idx=0
-        )
-        areaRight, dxRight = computeSubArea(
-            elevation=elevation, distance=distance, surfElev=surfElev, wetCellIdx=idx, idx=-1
-        )
+        subFlwArea = []
+        subXmin = []
+        subXmax = []
+        # iteration loop over subarrays
+        for sub in idxSub:
 
-        # get cell elevations and distances between cells
-        elev = elevation[idx]
-        dist = distance[idx]
-        # compute flow area
-        thickCells = surfElev - elev
-        # TODO: function np.trapz was changed to np.trapezoid in later numpy versions
-        flowArea.append(np.trapz(np.maximum(thickCells, 0), dist) + np.sum([areaLeft, areaRight]))
+            # np.trapz() only calculates the area between the vertices (cell centers)
+            # if the thickness at the very left and the very right cell is still > 0,
+            # there are remaining subareas on both sides that have to be considered
+            areaLeft, dxLeft = computeSubArea(
+                elevation=elevation, distance=distance, surfElev=surfElev, wetCellIdx=sub, idx=0
+            )
+            areaRight, dxRight = computeSubArea(
+                elevation=elevation, distance=distance, surfElev=surfElev, wetCellIdx=sub, idx=-1
+            )
+
+            # get cell elevations and distances between cells
+            elev = elevation[sub]
+            dist = distance[sub]
+            # compute flow area
+            thickCells = surfElev - elev
+            # TODO: function np.trapz was changed to np.trapezoid in later numpy versions
+            subFlwArea.append(np.trapz(np.maximum(thickCells, 0), dist) + np.sum([areaLeft, areaRight]))
+            # get xmin and xmax for subarrays; for plotting the elevation increments
+            subXmin.append(np.min(dist) - dxLeft)
+            subXmax.append(np.max(dist) + dxRight)
 
         # save results
+        flowArea.append(np.sum(subFlwArea))
         thickness.append(thick)
         surfaceLevel.append(surfElev)
-        xmin.append(np.min(dist) - dxLeft)
-        xmax.append(np.max(dist) + dxRight)
+        xmin.append(subXmin)
+        xmax.append(subXmax)
 
     ratingCurve = {
         "thickness": np.array(thickness),
         "flowArea": np.array(flowArea),
         "minElevation": minElev,
         "surfElev": np.array(surfaceLevel),
-        "xmin": np.array(xmin),
-        "xmax": np.array(xmax),
+        "xmin": xmin,
+        "xmax": xmax,
     }
 
     return ratingCurve

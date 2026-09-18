@@ -3,6 +3,7 @@ Plotting helper functions
 """
 
 # load modules
+import numpy as np
 import matplotlib.pyplot as plt
 
 # local imports
@@ -83,9 +84,17 @@ def plotRatingCurve(ratingCurve, crossSection, outputDir):
 
     ax[0].plot(crossSection["s"], crossSection["elevation"])
     ax[0].scatter(crossSection["sLevee"], crossSection["elevLevee"], color="red", label="Levee points")
-    ax[0].hlines(
-        surfElev, xmin=xmin, xmax=xmax, linestyles="--", colors="grey", lw=0.5, label="elevation increments"
-    )
+    for i, (elev, minimum, maximum) in enumerate(zip(surfElev, xmin, xmax)):
+        elev = [elev] * len(minimum)
+        ax[0].hlines(
+            elev,
+            xmin=minimum,
+            xmax=maximum,
+            linestyles="--",
+            colors="grey",
+            lw=0.5,
+            label="elevation increments" if i == 0 else "_nolegend_",
+        )
     ax[0].set_xlabel("distance [m]"), ax[0].set_ylabel("elevation [m]")
     ax[0].grid(color="gray", linestyle="--", linewidth=0.5, alpha=0.6)
     ax[0].set_title("Cross Section")
