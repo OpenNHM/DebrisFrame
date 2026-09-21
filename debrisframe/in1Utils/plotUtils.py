@@ -91,7 +91,7 @@ def plotRatingCurve(ratingCurve, crossSection, outputDir):
             xmin=minimum,
             xmax=maximum,
             linestyles="--",
-            colors="grey",
+            colors="black",
             lw=0.5,
             label="elevation increments" if i == 0 else "_nolegend_",
         )
@@ -100,9 +100,9 @@ def plotRatingCurve(ratingCurve, crossSection, outputDir):
     ax[0].set_title("Cross Section")
     ax[0].legend()
 
-    ax[1].plot(thickness, flowArea)
-    ax[1].set_xlabel("flow thickness [m]")
-    ax[1].set_ylabel("flow area [m²]")
+    ax[1].plot(flowArea, thickness)
+    ax[1].set_xlabel("flow area [m²]")
+    ax[1].set_ylabel("flow thickness [m]")
     ax[1].grid(color="gray", linestyle="--", linewidth=0.5, alpha=0.6)
     ax[1].set_title("Rating Curve")
 

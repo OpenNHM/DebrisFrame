@@ -113,7 +113,7 @@ def assignRasterCoords(cellSize, releaseLine):
     return releaseLine
 
 
-def computeSubArea(elevation, distance, surfElev, wetCellIdx, idx):
+def computeSubArea(elevation, distance, surfElev, idLevee, wetCellIdx, idx):
     """
     Computes flow subareas at the boundaries of a wetted cross section
     Handles the first (0) and last element (-1) of an index array
@@ -126,6 +126,8 @@ def computeSubArea(elevation, distance, surfElev, wetCellIdx, idx):
         the path along (distance) along the cross-section cells
     surfElev: float
         surface elevation of debris flow
+    idLevee: 1D-array
+        indices of levee points
     wetCellIdx: 1D-array
         indices of wetted cells
     idx: int
@@ -159,6 +161,9 @@ def computeSubArea(elevation, distance, surfElev, wetCellIdx, idx):
     else:
         dx = th / slope
 
+    if cellIdx in idLevee:
+        dx = 0.0
+
     subArea = 0.5 * th * dx
 
     return subArea, dx
@@ -166,7 +171,7 @@ def computeSubArea(elevation, distance, surfElev, wetCellIdx, idx):
 
 def computeRatingCurve(crossSection, topoHydCfg):
     """
-    compute relation between given discharge and flow thickness
+    compute relation between flow area and flow thickness
     in a given topographic cross section
 
     Parameters
@@ -217,7 +222,7 @@ def computeRatingCurve(crossSection, topoHydCfg):
         # search only in area between the two levee points
         idx = np.where(elevation[min(idLevee) : max(idLevee) + 1] <= surfElev)[0]
         idx = idx + min(idLevee)
-        # find breaking points in elevation array which lie over surfElev due to unevenness of ground 
+        # find breaking points in elevation array which lie over surfElev due to unevenness of ground
         idxOver = np.where(np.diff(idx) != 1)[0]
         # get subarrays between breaking points
         idxSub = np.split(idx, idxOver + 1)
@@ -237,10 +242,20 @@ def computeRatingCurve(crossSection, topoHydCfg):
             # if the thickness at the very left and the very right cell is still > 0,
             # there are remaining subareas on both sides that have to be considered
             areaLeft, dxLeft = computeSubArea(
-                elevation=elevation, distance=distance, surfElev=surfElev, wetCellIdx=sub, idx=0
+                elevation=elevation,
+                distance=distance,
+                surfElev=surfElev,
+                idLevee=idLevee,
+                wetCellIdx=sub,
+                idx=0,
             )
             areaRight, dxRight = computeSubArea(
-                elevation=elevation, distance=distance, surfElev=surfElev, wetCellIdx=sub, idx=-1
+                elevation=elevation,
+                distance=distance,
+                surfElev=surfElev,
+                idLevee=idLevee,
+                wetCellIdx=sub,
+                idx=-1,
             )
 
             # get cell elevations and distances between cells
@@ -696,7 +711,7 @@ def in2TopoHydMain(debrisDir, topoHydCfg, debrisCfg):
 
     """
 
-    #TODO: # Clean input directory(ies) of old work files?
+    # TODO: # Clean input directory(ies) of old work files?
     # initProj.cleanSingleAvaDir(debrisDir, deleteOutput=False)
 
     # create output directory
@@ -712,7 +727,7 @@ def in2TopoHydMain(debrisDir, topoHydCfg, debrisCfg):
     meshCellSize = debrisCfg.getfloat("com1DFA_com1DFA_override", "meshCellSize")
 
     if cellsize != meshCellSize:
-        #TODO: get fallback values from default config file?
+        # TODO: get fallback values from default config file?
         meshCellSizeThreshold = debrisCfg["com1DFA_com1DFA_override"].get(
             "meshCellSizeThreshold", fallback="0.001"
         )
