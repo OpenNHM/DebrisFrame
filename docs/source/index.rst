@@ -20,6 +20,7 @@ General
     * :doc:`introduction`
     * :doc:`installation`
     * :doc:`workflow`
+    * :doc:`release`
 
 .. toctree::
    :maxdepth: 4
@@ -29,6 +30,7 @@ General
    introduction.rst
    installation.rst
    workflow.rst
+   release.rst
 
 
 Computational modules

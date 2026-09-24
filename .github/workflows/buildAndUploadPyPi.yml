@@ -1,0 +1,90 @@
+# Build DebrisFrame and publish it to TestPyPI and PyPI.
+#
+# Release-first flow (matches AvaFrame):
+#   1. Create a GitHub release for the new version tag (X.Y.Z). This creates the
+#      tag and triggers Zenodo, which archives the release and mints the DOI.
+#   2. Dispatch this workflow from the Actions tab, selecting that release tag in
+#      the "Use workflow from" dropdown.
+#
+# hatch-vcs derives the version from the git tag, so the workflow must run against
+# the tag; otherwise the build gets a local version segment (e.g. +g<hash>) that
+# PyPI rejects. The guard step below enforces this.
+
+name: Build and upload to PyPI
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build distribution
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Verify the workflow runs on a release tag
+        if: github.ref_type != 'tag'
+        run: |
+          echo "::error::Dispatch this workflow against a release tag (X.Y.Z), not '${{ github.ref_name }}'."
+          exit 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install build tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install build twine
+
+      - name: Build sdist and wheel
+        run: python -m build
+
+      - name: Check distribution metadata
+        run: twine check dist/*
+
+      - name: Smoke test wheel install
+        run: |
+          python -m venv /tmp/smoke
+          /tmp/smoke/bin/pip install dist/*.whl
+          /tmp/smoke/bin/python -c "import debrisframe"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist
+          path: dist/*
+
+  publish_testpypi:
+    name: Publish to TestPyPI
+    needs: build
+    runs-on: ubuntu-latest
+    environment: testpypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist
+
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+
+  publish_pypi:
+    name: Publish to PyPI
+    needs: publish_testpypi
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist
+
+      - uses: pypa/gh-action-pypi-publish@release/v1

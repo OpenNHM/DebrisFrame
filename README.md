@@ -1,6 +1,14 @@
 # DebrisFrame
 
-How to install DebrisFrame can be found [here](https://docs.debrisframe.org/en/latest/installation.html#).
+[![PyPI](https://img.shields.io/pypi/v/debrisframe.svg)](https://pypi.org/project/debrisframe/)
+
+Install from PyPI:
+
+```
+pip install debrisframe
+```
+
+How to install DebrisFrame from source can be found [here](https://docs.debrisframe.org/en/latest/installation.html#).
 
 [![Maintainability](https://qlty.sh/badges/0bf94b24-fee3-4fb1-9520-9e09adfe7195/maintainability.svg)](https://qlty.sh/gh/OpenNHM/projects/DebrisFrame)
 
