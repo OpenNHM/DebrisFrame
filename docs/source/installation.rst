@@ -1,5 +1,17 @@
 Install DebrisFrame
 ---------------------
+
+From PyPI
+^^^^^^^^^
+
+::
+
+  pip install debrisframe
+
+This installs AvaFrame (``avaframe>=2.2b1``) as a dependency.
+
+From source
+^^^^^^^^^^^
   
 Running DebrisFrame means running AvaFrame's com1DFA with parameters for debris flows (:py:mod:`c1TIF`).
 Therefore, follow AvaFrame's `installation instructions <https://docs.avaframe.org/en/latest/complexUsage.html>`_ first.

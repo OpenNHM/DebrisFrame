@@ -7,18 +7,17 @@ name = "debrisframe"
 description = "The Open Debris flow Framework"
 readme = "README.md"
 dynamic = ["version"]
-license = { text = "EUPL" }
+license = "EUPL-1.2"
 authors = [
     { name = "DebrisFrame Contributors", email = "felix@avaframe.org" }
 ]
-urls = { Homepage = "http://debrisframe.org" }
+keywords = ["debris flow", "natural hazards", "simulation", "open source"]
 classifiers = [
     # How mature is this project? Common values are
     # 3 - Alpha  4 - Beta  5 - Production/Stable
     "Development Status :: 3 - Alpha",
     # Indicate who your project is intended for
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: European Union Public Licence 1.2 (EUPL 1.2)",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -27,8 +26,14 @@ classifiers = [
 ]
 requires-python = ">=3.9,<3.14"
 dependencies = [
+    "avaframe>=2.2b1",
 ]
- 
+
+[project.urls]
+Homepage = "http://opennhm.org"
+Repository = "https://github.com/OpenNHM/DebrisFrame"
+Issues = "https://github.com/OpenNHM/DebrisFrame/issues"
+
 [tool.flake8]
 max-line-length = 109
 select = ['B950']
@@ -43,6 +48,13 @@ source = "vcs"
 [tool.hatch.version.raw-options]
 version_scheme = "no-guess-dev"
 local_scheme = "node-and-date"
+
+[tool.hatch.build.targets.wheel]
+packages = ["debrisframe"]
+exclude = ["debrisframe/tests", "debrisframe/data"]
+
+[tool.hatch.build.targets.sdist]
+exclude = ["debrisframe/tests", "debrisframe/data"]
 
 [tool.pixi.workspace]
 channels = ["conda-forge/label/qgis_ltr", "https://prefix.dev/conda-forge"]
@@ -66,6 +78,12 @@ pixi-pycharm = "*"
 [tool.pixi.feature.dev.pypi-dependencies]
 debrisframe = { path = "./", editable = true }
 avaframe = { path = "../AvaFrame", editable = true }
+
+# The local editable AvaFrame reports a pre-release dev version (e.g. 2.1+57.g...),
+# which cannot satisfy debrisframe's published avaframe>=2.2b1 pin. Relax the
+# constraint for local development; the published metadata keeps the pin.
+[tool.pixi.feature.dev.pypi-options.dependency-overrides]
+avaframe = ">=2.1"
 
 # Environments
 [tool.pixi.environments]
