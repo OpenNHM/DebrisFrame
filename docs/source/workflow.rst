@@ -32,6 +32,81 @@ Install the QGIS connector and DebrisFrame as described in
 :ref:`installationFromQGis`. After restarting QGIS, the DebrisFrame tools appear
 in the Processing Toolbox under ``DebrisFrame_Experimental``.
 
+Each tool corresponds to a DebrisFrame module and exposes its inputs and outputs
+as QGIS processing parameters. The following sections summarize the individual tools.
+For details on the underlying modules, see the linked module pages.
+
+
+Thickness integrated flow (c1)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Runs a thickness integrated debris flow simulation via module :py:mod:`c1TIF`.
+
+Inputs:
+
+* ``DEM layer`` (required) - raster layer.
+* ``Release layer(s)`` (optional) - required only if the csv file has no x/y columns.
+* ``Time dependent release values / release geometry`` (optional) - csv file; defines the release
+  geometry if it contains x/y columns.
+
+  .. note::
+
+     The ``initCondHyd.csv`` produced by the Hydrograph Starting Condition (in2TopoHyd) tool can be
+     used here as the time dependent release input.
+
+* ``Secondary release layer`` (optional) - only one is allowed.
+* ``Entrainment layer`` (optional) - only one is allowed.
+* ``Resistance layer`` (optional) - only one is allowed.
+* ``Destination folder`` (required) - process directory.
+* ``Expert configuration file`` (advanced, optional) - ``c1TIFCfg.ini``. See
+  :ref:`moduleC1TIF:Model configuration`.
+
+Outputs:
+
+* ``Output layer`` - simulation result.
+
+
+Hydrograph Starting Condition (in2TopoHyd)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Computes the initial conditions at a release line via module :py:mod:`in2TopoHyd`.
+
+.. note::
+
+   The resulting ``initCondHyd.csv`` can be used as the time dependent release input
+   (``Time dependent release values / release geometry``) for the Thickness integrated flow (c1) tool.
+
+Inputs:
+
+* ``DEM layer`` (required) - raster layer.
+* ``Release line`` (required) - line with exactly two points (start and end).
+* ``Levee points`` (required) - two points, left and right bank.
+* ``Hydrograph csv file`` (required) - csv file with the columns ``timestep`` (values in [s]) and
+  ``discharge`` (values in [m³/s]).
+* ``Destination folder`` (required) - process directory.
+* ``Expert configuration file`` (advanced, optional) - ``in2TopoHydCfg.ini``. See
+  :ref:`moduleIn2TopoHyd:Model configuration`.
+
+Outputs:
+
+* ``Cross section cells`` - point layer.
+
+
+Get default DebrisFrame module ini
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Extracts the default configuration file for the selected DebrisFrame module. The file can then be
+edited and supplied as the expert configuration file when running the corresponding simulation tool.
+
+Inputs:
+
+* ``Module`` (required) - select either ``c1TIF`` or ``in2TopoHyd``.
+* ``Destination file`` (required) - ini file to write.
+
+Outputs:
+
+* the written ini file.
+
 
 Relevant parameters
 -------------------
