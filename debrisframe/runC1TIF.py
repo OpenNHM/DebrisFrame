@@ -65,7 +65,7 @@ def runC1TIF(debrisDir="", inHydr=False):
     initProj.cleanSingleAvaDir(debrisDir, deleteOutput=False)
 
     # load debris flow config
-    DebrisCfg = cfgUtils.getModuleConfig(c1TIF)
+    DebrisCfg = cfgUtils.getModuleConfig(c1TIF, debrisDir, toPrint=False)
 
     # ---------------------
     # check if in2TopoHyd computes input data for c1TIF
