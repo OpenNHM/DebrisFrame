@@ -28,8 +28,9 @@ Then run ::
 Application via QGIS
 ---------------------
 
-.. Note:: 
-    This documentation will be added soon!
+Install the QGIS connector and DebrisFrame as described in
+:ref:`installationFromQGis`. After restarting QGIS, the DebrisFrame tools appear
+in the Processing Toolbox under ``DebrisFrame_Experimental``.
 
 
 Relevant parameters
