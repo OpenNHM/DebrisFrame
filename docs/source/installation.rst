@@ -36,5 +36,3 @@ change into your ``debrisframe`` directory (replace ``[YOURDIR]`` with your path
   pixi run python runC1TIF.py
 
 
-  
-
