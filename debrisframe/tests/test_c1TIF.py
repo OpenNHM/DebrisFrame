@@ -9,6 +9,7 @@ import shutil
 import pytest
 
 from debrisframe.c1TIF import c1TIF
+from debrisframe import runC1TIF
 
 from avaframe.in3Utils import cfgUtils
 
@@ -48,3 +49,25 @@ def test_runC1TIF(tmp_path):
     assert simDF["rho"].iloc[0] == 1000
     assert simDF["explicitFriction"].iloc[0] == 0
     assert simDF["frictModel"].iloc[0] == "Voellmy"
+
+
+def test_runC1TIF_expertCfg(tmp_path):
+    """Expert Inputs/CFGs/c1TIFCfg.ini must take effect in runC1TIF"""
+
+    testDir = pathlib.Path(__file__).parents[0]
+    inputDir = testDir / "data" / "testC1TIF"
+    avaDir = pathlib.Path(tmp_path, "testC1TIF")
+    shutil.copytree(inputDir, avaDir)
+
+    cfgDir = avaDir / "Inputs" / "CFGs"
+    cfgDir.mkdir(parents=True)
+    expertCfg = cfgDir / "c1TIFCfg.ini"
+    expertCfg.write_text("[com1DFA_com1DFA_override]\nrho = 3000\n")
+
+    runC1TIF.runC1TIF(str(avaDir))
+
+    # expert config survives cleanSingleAvaDir (Review Focus 4)
+    assert expertCfg.is_file()
+    # override was read from Inputs/CFGs, not the packaged default (Review Focus 1, 5)
+    simDF, _ = cfgUtils.readAllConfigurationInfo(str(avaDir))
+    assert int(simDF["rho"].iloc[0]) == 3000
