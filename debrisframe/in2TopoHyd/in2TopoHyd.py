@@ -9,6 +9,7 @@ import logging
 import configparser
 import numpy as np
 import pandas as pd
+import geopandas as gpd
 
 # local imports
 from avaframe.in1Data import getInput as gI
@@ -326,7 +327,11 @@ def computeParallelCrossSection(dem, crossSection, topoHydCfg):
     # get cell size of dem
     csz = dem["header"]["cellsize"]
     # get normal distance to release line
-    normalDist = topoHydCfg["GENERAL"].get("normalDist", fallback="")
+    if topoHydCfg.has_option("GENERAL", "normalDist"):
+        normalDist = topoHydCfg["GENERAL"].get("normalDist", fallback="")
+    else:
+        normalDist = topoHydCfg["in2TopoHyd_in2TopoHyd_override"].get("normalDist", fallback="")
+    #TODO: read normalDist from c1TIFCfg.ini
 
     # get direction of cross section
     dx = xcoordEnd - xcoordStart
@@ -526,28 +531,39 @@ def getCrossSectionCells(dem, releaseLine):
     # get direction of release line
     dx = xcoordEnd - xcoordStart
     dy = ycoordEnd - ycoordStart
-
+    #TODO: delete
     # exception if the release line is a parallel to the
     # horizontal or the vertical of the DEM grid
-    if dx == 0.0:
-        num = abs(int(dy / csz)) + 1
-        crossSectionY = np.linspace(ycoordStart, ycoordEnd, num)
-        crossSectionX = np.array([xcoordStart] * len(crossSectionY))
-    elif dy == 0.0:
-        num = abs(int(dx / csz)) + 1
-        crossSectionX = np.linspace(xcoordStart, xcoordEnd, num)
-        crossSectionY = np.array([ycoordStart] * len(crossSectionX))
-    else:
-        # get x-coords of raster cells
-        num = abs(int(dx / csz)) + 1
-        crossSectionX = np.linspace(xcoordStart, xcoordEnd, num)
-        # get distance along x-direction
-        x = np.cumsum(np.diff(crossSectionX))
-        x = np.insert(x, 0, 0)
-        # get y-coords of raster cells
-        crossSectionY = dy / dx * x + ycoordStart
-        # snap to nearest cell center, not to global multiples of the cell size
-        crossSectionY = yllcenter + np.round((crossSectionY - yllcenter) / csz) * csz
+    # if dx == 0.0:
+    #     num = abs(int(dy / csz)) + 1
+    #     crossSectionY = np.linspace(ycoordStart, ycoordEnd, num)
+    #     crossSectionX = np.array([xcoordStart] * len(crossSectionY))
+    # elif dy == 0.0:
+    #     num = abs(int(dx / csz)) + 1
+    #     crossSectionX = np.linspace(xcoordStart, xcoordEnd, num)
+    #     crossSectionY = np.array([ycoordStart] * len(crossSectionX))
+    # else:
+    #     # get x-coords of raster cells
+    #     num = abs(int(dx / csz)) + 1
+    #     crossSectionX = np.linspace(xcoordStart, xcoordEnd, num)
+    #     # get distance along x-direction
+    #     x = np.cumsum(np.diff(crossSectionX))
+    #     x = np.insert(x, 0, 0)
+    #     # get y-coords of raster cells
+    #     crossSectionY = dy / dx * x + ycoordStart
+    #     # snap to nearest cell center, not to global multiples of the cell size
+    #     crossSectionY = yllcenter + np.round((crossSectionY - yllcenter) / csz) * csz
+
+    # Sample at least once per cell along the dominant direction.
+    num = int(np.ceil(max(abs(dx), abs(dy)) / csz)) + 1
+    fraction = np.linspace(0.0, 1.0, num)
+
+    crossSectionX = xcoordStart + fraction * dx
+    crossSectionY = ycoordStart + fraction * dy
+
+    # Snap sampled coordinates to the nearest DEM cell centers.
+    crossSectionX = xllcenter + np.round((crossSectionX - xllcenter) / csz) * csz
+    crossSectionY = yllcenter + np.round((crossSectionY - yllcenter) / csz) * csz
 
     # get indices of cross-section cells
     col = np.int32(np.round((crossSectionX - xllcenter) / csz))
@@ -732,7 +748,7 @@ def getHydrograph(inputDir):
     return hydrograph
 
 
-def getInputShapeFiles(inputDir, folder, fileType, dem):
+def getInputShapeFiles(inputDir, folder, fileType, dem, idField=None):
     """
     Reads release line and levee point data from input shapefiles
 
@@ -743,9 +759,11 @@ def getInputShapeFiles(inputDir, folder, fileType, dem):
     folder: str
         name of folder where the shapefile is located
     fileType: str
-        "Release line" or "Levee points"
+        "Release line", "Levee points" or "Output hydrograph"
     dem: dict
         dem dictionary
+    idField: str
+        name of shapefile attribute of interest; by default None
 
     Returns
     --------
@@ -754,6 +772,7 @@ def getInputShapeFiles(inputDir, folder, fileType, dem):
         Line['Coord'] : np array of the coords of points in lines
         Line['Start'] : list of starting index of each line in Coord
         Line['Length'] : list of length of each line in Coord
+        Line['ID]: list of IDs
     """
 
     # get file name
@@ -764,15 +783,37 @@ def getInputShapeFiles(inputDir, folder, fileType, dem):
         raise FileNotFoundError(message)
 
     # get release line
-    shapeFile = shpConv.readLine(fname, "release1", dem)
+    shapeFile = shpConv.readLine(fname, fileType, dem)
 
-    # fetch number of points
-    nPoints = len(shapeFile["x"])
     # check if shapefile includes only two points: starting and ending point
-    if nPoints != 2:
+    nPoints = len(shapeFile["x"])
+    if fileType.lower() in ["release Line", "levee points"] and nPoints != 2:
         message = f"{fileType} consists of more/less than 2 points! Only starting and ending point allowed!"
         log.error(message)
         raise ValueError(message)
+
+    elif nPoints % 2 != 0:
+        message = f"{fileType} consists of more/less than 2 points! Only starting and ending point allowed!"
+        log.error(message)
+        raise ValueError(message)
+
+    if idField is not None:
+        gdf = gpd.read_file(fname)
+
+        colName = [x.lower() for x in gdf.columns]
+        if idField.lower() not in colName:
+            raise ValueError(f"Attribute field '{idField}' not found in {fname}")
+
+        if gdf[idField].isna().any():
+            raise ValueError(f"Attribute field '{idField}' contains missing values")
+
+        if gdf[idField].duplicated().any():
+            raise ValueError(f"Attribute field '{idField}' must be unique")
+
+        if len(gdf) != shapeFile["nFeatures"]:
+            raise ValueError("Number of shapefile features does not match ")
+
+        shapeFile["ID"] = gdf[idField].tolist()
 
     log.info(f"{fileType} used: {fname}")
 
@@ -897,8 +938,12 @@ def in2TopoHydMain(debrisDir, topoHydCfg, debrisCfg):
 
     # get release line and levee points
     inputDir = pathlib.Path(debrisDir, "Inputs")
-    releaseLine = getInputShapeFiles(inputDir=inputDir, folder="XSECT", fileType="Release line", dem=dem)
-    leveePoints = getInputShapeFiles(inputDir=inputDir, folder="LEVEE", fileType="Levee points", dem=dem)
+    releaseLine = getInputShapeFiles(
+        inputDir=inputDir, folder="XSECT", fileType="Release line", dem=dem, idField=None
+    )
+    leveePoints = getInputShapeFiles(
+        inputDir=inputDir, folder="LEVEE", fileType="Levee points", dem=dem, idField=None
+    )
 
     # +++ 2. get all cells along the release line
     log.info("Get all cells along the release line")
@@ -951,7 +996,7 @@ def in2TopoHydMain(debrisDir, topoHydCfg, debrisCfg):
     vy = np.round(vel * flwDirection[1], decimals=2)
     vz = np.round(vel * flwDirection[2], decimals=2)
 
-    # +++ 6. export x,y-coords, timesteps, thickness and x,y,z(?)-velocities to csv-file
+    # +++ 6. export x,y-coords, timesteps, thickness and x,y,z-velocities to csv-file
     log.info("Export csv-file")
 
     time = []
