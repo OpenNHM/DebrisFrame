@@ -19,6 +19,7 @@ import debrisframe as debf
 from debrisframe.c1TIF import c1TIF
 from debrisframe.in2TopoHyd import in2TopoHyd
 from debrisframe.in1Utils import fileUtils
+from debrisframe.outHelper import out1HelpDFHyd
 
 
 def runC1TIF(debrisDir="", inHydr=False):
@@ -98,6 +99,9 @@ def runC1TIF(debrisDir="", inHydr=False):
         # copy in2TopoHyd output into Inputs folder for c1TIF
         fileUtils.copyHydrToInput(debrisDir)
 
+    if DebrisCfg["VISUALISATION"].getboolean("outputHydrograph"):
+        out1HelpDFHyd.out1HelpDFHydMain(debrisDir, DebrisCfg)
+        
     # perform com1DFA simulation with debris flow settings
     _, plotDict, reportDictList, _ = c1TIF.c1TIFMain(cfgMain, DebrisCfg)
 

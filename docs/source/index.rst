@@ -63,6 +63,21 @@ Input modules
    moduleIn2TopoHyd.rst
 
 
+Helper functions
+=====================
+
+.. only:: html
+
+    * :doc:`moduleOut1Hydrograph`
+
+.. toctree::
+   :maxdepth: 3
+   :hidden:
+   :caption: Helper functions
+
+   out1HelpDFHyd.rst
+
+
 Indices and tables
 ==================
 
