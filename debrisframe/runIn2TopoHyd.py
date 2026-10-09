@@ -55,7 +55,7 @@ def runIn2TopoHyd(debrisDir=""):
     log.info("Current debris flow: %s", debrisDir)
 
     # load debris flow config
-    DebrisCfg = cfgUtils.getModuleConfig(c1TIF)
+    DebrisCfg = cfgUtils.getModuleConfig(c1TIF, onlyDefault=True)
 
     # load module config
     # topoHydCfg

@@ -1,10 +1,9 @@
 """
-    Debris flow overrides for com1DFA
+Debris flow overrides for com1DFA
 """
 
 # Load modules
 import logging
-
 
 # Local imports
 from avaframe.in3Utils import cfgUtils
@@ -37,14 +36,15 @@ def c1TIFMain(cfgMain, debrisCfg):
         toPrint=False,
         onlyDefault=debrisCfg["com1DFA_com1DFA_override"].getboolean("defaultConfig"),
     )
-    com1DFACfg, debrisCfg = cfgHandling.applyCfgOverride(
-        com1DFACfg, debrisCfg, com1DFA, addModValues=False
-    )
+    com1DFACfg, debrisCfg = cfgHandling.applyCfgOverride(com1DFACfg, debrisCfg, com1DFA, addModValues=False)
+
+    if debrisCfg["VISUALISATION"].getboolean("outputHydrograph"):
+        com1DFACfg.set("VISUALISATION", "outputHydrograph", "True")
+    else:
+        com1DFACfg.set("VISUALISATION", "outputHydrograph", "False")
 
     # run the com1DFA module with debris flow settings
-    dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(
-        cfgMain, cfgInfo=com1DFACfg
-    )
+    dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(cfgMain, cfgInfo=com1DFACfg)
 
     # print info about simulation performed to log
     log.info("Com1DFA run performed with debris flow settings")
