@@ -764,15 +764,17 @@ def getInputShapeFiles(inputDir, folder, fileType, dem):
         raise FileNotFoundError(message)
 
     # get release line
-    shapeFile = shpConv.readLine(fname, "release1", dem)
+    shapeFile = shpConv.readLine(fname, fileType, dem)
 
     # fetch number of points
     nPoints = len(shapeFile["x"])
     # check if shapefile includes only two points: starting and ending point
-    if nPoints != 2:
+    if fileType in ["Release Line", "Levee points"] and nPoints != 2:
         message = f"{fileType} consists of more/less than 2 points! Only starting and ending point allowed!"
         log.error(message)
         raise ValueError(message)
+    elif nPoints % shapeFile["nFeatures"] != 0:
+        log.error(message)
 
     log.info(f"{fileType} used: {fname}")
 
@@ -951,7 +953,7 @@ def in2TopoHydMain(debrisDir, topoHydCfg, debrisCfg):
     vy = np.round(vel * flwDirection[1], decimals=2)
     vz = np.round(vel * flwDirection[2], decimals=2)
 
-    # +++ 6. export x,y-coords, timesteps, thickness and x,y,z(?)-velocities to csv-file
+    # +++ 6. export x,y-coords, timesteps, thickness and x,y,z-velocities to csv-file
     log.info("Export csv-file")
 
     time = []
@@ -984,3 +986,17 @@ def in2TopoHydMain(debrisDir, topoHydCfg, debrisCfg):
     )
 
     output.to_csv(outputDir / "initCondHyd.csv", sep=",", decimal=".", header=True, index=False)
+
+    # +++ 7. export x,y-coords of cross section cells to csv-file for plotting output hydrographs (optional)
+    if debrisCfg["GENERAL"].getboolean("outputHydrograph"): 
+        log.info("Export coordinates of output hydrographs")
+
+        outLine = getInputShapeFiles(inputDir=inputDir, folder="OUTHYDR", fileType="Output hydrograph", dem=dem)
+        #TODO: get ID of output hydrograph -> coordinates?
+
+        # get cross section cells
+        outputHydrograph = getCrossSectionCells(dem, outLine)
+        # get distance between cells
+        outputHydrograph = geoTrans.computeS(outputHydrograph)
+    
+        print(outLine)
