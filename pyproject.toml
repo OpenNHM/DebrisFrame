@@ -83,7 +83,10 @@ avaframe = { path = "../AvaFrame", editable = true }
 # which cannot satisfy debrisframe's published avaframe>=2.2b1 pin. Relax the
 # constraint for local development; the published metadata keeps the pin.
 [tool.pixi.feature.dev.pypi-options.dependency-overrides]
-avaframe = ">=2.1"
+avaframe = ">2.1"
+
+[tool.pixi.feature.dev.pypi-options]
+prerelease-mode = "allow"
 
 # Environments
 [tool.pixi.environments]
