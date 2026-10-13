@@ -9,6 +9,7 @@ import logging
 import configparser
 import numpy as np
 import pandas as pd
+import geopandas as gpd
 
 # local imports
 from avaframe.in1Data import getInput as gI
@@ -529,25 +530,36 @@ def getCrossSectionCells(dem, releaseLine):
 
     # exception if the release line is a parallel to the
     # horizontal or the vertical of the DEM grid
-    if dx == 0.0:
-        num = abs(int(dy / csz)) + 1
-        crossSectionY = np.linspace(ycoordStart, ycoordEnd, num)
-        crossSectionX = np.array([xcoordStart] * len(crossSectionY))
-    elif dy == 0.0:
-        num = abs(int(dx / csz)) + 1
-        crossSectionX = np.linspace(xcoordStart, xcoordEnd, num)
-        crossSectionY = np.array([ycoordStart] * len(crossSectionX))
-    else:
-        # get x-coords of raster cells
-        num = abs(int(dx / csz)) + 1
-        crossSectionX = np.linspace(xcoordStart, xcoordEnd, num)
-        # get distance along x-direction
-        x = np.cumsum(np.diff(crossSectionX))
-        x = np.insert(x, 0, 0)
-        # get y-coords of raster cells
-        crossSectionY = dy / dx * x + ycoordStart
-        # snap to nearest cell center, not to global multiples of the cell size
-        crossSectionY = yllcenter + np.round((crossSectionY - yllcenter) / csz) * csz
+    # if dx == 0.0:
+    #     num = abs(int(dy / csz)) + 1
+    #     crossSectionY = np.linspace(ycoordStart, ycoordEnd, num)
+    #     crossSectionX = np.array([xcoordStart] * len(crossSectionY))
+    # elif dy == 0.0:
+    #     num = abs(int(dx / csz)) + 1
+    #     crossSectionX = np.linspace(xcoordStart, xcoordEnd, num)
+    #     crossSectionY = np.array([ycoordStart] * len(crossSectionX))
+    # else:
+    #     # get x-coords of raster cells
+    #     num = abs(int(dx / csz)) + 1
+    #     crossSectionX = np.linspace(xcoordStart, xcoordEnd, num)
+    #     # get distance along x-direction
+    #     x = np.cumsum(np.diff(crossSectionX))
+    #     x = np.insert(x, 0, 0)
+    #     # get y-coords of raster cells
+    #     crossSectionY = dy / dx * x + ycoordStart
+    #     # snap to nearest cell center, not to global multiples of the cell size
+    #     crossSectionY = yllcenter + np.round((crossSectionY - yllcenter) / csz) * csz
+
+    # Sample at least once per cell along the dominant direction.
+    num = int(np.ceil(max(abs(dx), abs(dy)) / csz)) + 1
+    fraction = np.linspace(0.0, 1.0, num)
+
+    crossSectionX = xcoordStart + fraction * dx
+    crossSectionY = ycoordStart + fraction * dy
+
+    # Snap sampled coordinates to the nearest DEM cell centers.
+    crossSectionX = xllcenter + np.round((crossSectionX - xllcenter) / csz) * csz
+    crossSectionY = yllcenter + np.round((crossSectionY - yllcenter) / csz) * csz
 
     # get indices of cross-section cells
     col = np.int32(np.round((crossSectionX - xllcenter) / csz))
@@ -732,7 +744,7 @@ def getHydrograph(inputDir):
     return hydrograph
 
 
-def getInputShapeFiles(inputDir, folder, fileType, dem):
+def getInputShapeFiles(inputDir, folder, fileType, dem, idField=None):
     """
     Reads release line and levee point data from input shapefiles
 
@@ -743,9 +755,11 @@ def getInputShapeFiles(inputDir, folder, fileType, dem):
     folder: str
         name of folder where the shapefile is located
     fileType: str
-        "Release line" or "Levee points"
+        "Release line", "Levee points" or "Output hydrograph"
     dem: dict
         dem dictionary
+    idField: str
+        name of shapefile attribute of interest; by default None
 
     Returns
     --------
@@ -754,6 +768,7 @@ def getInputShapeFiles(inputDir, folder, fileType, dem):
         Line['Coord'] : np array of the coords of points in lines
         Line['Start'] : list of starting index of each line in Coord
         Line['Length'] : list of length of each line in Coord
+        Line['ID]: list of IDs
     """
 
     # get file name
@@ -766,15 +781,33 @@ def getInputShapeFiles(inputDir, folder, fileType, dem):
     # get release line
     shapeFile = shpConv.readLine(fname, fileType, dem)
 
-    # fetch number of points
-    nPoints = len(shapeFile["x"])
     # check if shapefile includes only two points: starting and ending point
-    if fileType in ["Release Line", "Levee points"] and nPoints != 2:
+    nPoints = len(shapeFile["x"])
+    if fileType.lower() in ["release Line", "levee points"] and nPoints != 2:
         message = f"{fileType} consists of more/less than 2 points! Only starting and ending point allowed!"
         log.error(message)
         raise ValueError(message)
     elif nPoints % shapeFile["nFeatures"] != 0:
         log.error(message)
+    # TODO: test if output hydrograph has more than two vertices
+
+    if idField is not None:
+        gdf = gpd.read_file(fname)
+
+        colName = [x.lower() for x in gdf.columns]
+        if idField.lower() not in colName:
+            raise ValueError(f"Attribute field '{idField}' not found in {fname}")
+
+        if gdf[idField].isna().any():
+            raise ValueError(f"Attribute field '{idField}' contains missing values")
+
+        if gdf[idField].duplicated().any():
+            raise ValueError(f"Attribute field '{idField}' must be unique")
+
+        if len(gdf) != shapeFile["nFeatures"]:
+            raise ValueError("Number of shapefile features does not match ")
+
+        shapeFile["ID"] = gdf[idField].tolist()
 
     log.info(f"{fileType} used: {fname}")
 
@@ -899,8 +932,12 @@ def in2TopoHydMain(debrisDir, topoHydCfg, debrisCfg):
 
     # get release line and levee points
     inputDir = pathlib.Path(debrisDir, "Inputs")
-    releaseLine = getInputShapeFiles(inputDir=inputDir, folder="XSECT", fileType="Release line", dem=dem)
-    leveePoints = getInputShapeFiles(inputDir=inputDir, folder="LEVEE", fileType="Levee points", dem=dem)
+    releaseLine = getInputShapeFiles(
+        inputDir=inputDir, folder="XSECT", fileType="Release line", dem=dem, idField=None
+    )
+    leveePoints = getInputShapeFiles(
+        inputDir=inputDir, folder="LEVEE", fileType="Levee points", dem=dem, idField=None
+    )
 
     # +++ 2. get all cells along the release line
     log.info("Get all cells along the release line")
@@ -988,15 +1025,54 @@ def in2TopoHydMain(debrisDir, topoHydCfg, debrisCfg):
     output.to_csv(outputDir / "initCondHyd.csv", sep=",", decimal=".", header=True, index=False)
 
     # +++ 7. export x,y-coords of cross section cells to csv-file for plotting output hydrographs (optional)
-    if debrisCfg["GENERAL"].getboolean("outputHydrograph"): 
-        log.info("Export coordinates of output hydrographs")
+    if debrisCfg["com1DFA_com1DFA_override"].getboolean("outputHydrograph"):
+        log.info("Export indices of output hydrographs")
+        # get output hydrograph output lines
+        outLine = getInputShapeFiles(
+            inputDir=inputDir, folder="OUTHYDR", fileType="Output hydrograph", dem=dem, idField="Station"
+        )
+        # get cross section cells for every hydrograph output line
+        outputHydrograph = {}
+        for i, id in enumerate(outLine["ID"]):
+            start = int(outLine["Start"][i])
+            end = start + int(outLine["Length"][i])
 
-        outLine = getInputShapeFiles(inputDir=inputDir, folder="OUTHYDR", fileType="Output hydrograph", dem=dem)
-        #TODO: get ID of output hydrograph -> coordinates?
+            # Create a dictionary for the current hydrograph line
+            singleLine = {
+                "x": outLine["x"][start:end],
+                "y": outLine["y"][start:end],
+            }
+            # get cross section cells
+            crossSection = getCrossSectionCells(dem, singleLine)
+            crossSection = geoTrans.computeS(crossSection)
 
-        # get cross section cells
-        outputHydrograph = getCrossSectionCells(dem, outLine)
-        # get distance between cells
-        outputHydrograph = geoTrans.computeS(outputHydrograph)
-    
-        print(outLine)
+            outputHydrograph[str(id)] = crossSection
+
+        # export to csv-file
+        station = []
+        row = []
+        col = []
+        dist = []
+
+        for hyd in outputHydrograph.keys():
+            for j in range(len(outputHydrograph[hyd]["x"])):
+                station.append(hyd)
+                row.append(outputHydrograph[hyd]["crossSectIdx"][0][j])
+                col.append(outputHydrograph[hyd]["crossSectIdx"][1][j])
+                dist.append(outputHydrograph[hyd]["s"][j])
+
+        outputHydrograph = pd.DataFrame(
+            {
+                "station": station,
+                "row": row,
+                "column": col,
+                "distance": dist,
+            }
+        )
+
+        # create output directory
+        outputDir = pathlib.Path(debrisDir, "Inputs", "OUTHYDR")
+
+        outputHydrograph.to_csv(
+            outputDir / "outputHydrograph.csv", sep=",", decimal=".", header=True, index=False
+        )
