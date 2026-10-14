@@ -88,5 +88,3 @@ under ``DebrisFrame_Experimental``. See :ref:`workflow:Application via QGIS` for
 an overview of the available modules and how to run them.
 
 
-  
-
