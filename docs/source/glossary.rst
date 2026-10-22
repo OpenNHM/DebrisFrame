@@ -17,12 +17,13 @@ Glossary
         a mixture of water, sediment, and sometimes boulders and woody debris.
         A debris flow hydrograph can be used as a start condition of a debris flow simulation.
 
-
     entrainment
-        Entrainment refers to the incorporation of :term:`eroded` material into the moving debris flow.
+        Entrainment refers to the incorporation of material into a moving debris flow through the :term:`erosion` of the
+        bed, resulting in an increase in flow mass.
 
     erosion
-        Erosion is the process by which material is detached and removed from the surface bed due to the forces exerted by the flowing debris mass.
+        Erosion is the process by which material is detached and removed from the surface bed due to the forces exerted
+        by the flowing debris mass.
 
     hydrograph
         The hydrograph is the time series describing how the discharge of water varies at a given cross-section.
