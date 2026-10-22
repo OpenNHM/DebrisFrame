@@ -76,6 +76,7 @@ References
 ==========
 
     * :doc:`zreferences`
+    * :doc:`glossary`
 
 .. toctree::
     :maxdepth: 0
@@ -83,5 +84,6 @@ References
     :caption: References
 
     zreferences.rst
+    glossary.rst
 
 
