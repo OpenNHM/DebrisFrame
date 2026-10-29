@@ -327,7 +327,11 @@ def computeParallelCrossSection(dem, crossSection, topoHydCfg):
     # get cell size of dem
     csz = dem["header"]["cellsize"]
     # get normal distance to release line
-    normalDist = topoHydCfg["GENERAL"].get("normalDist", fallback="")
+    if topoHydCfg.has_option("GENERAL", "normalDist"):
+        normalDist = topoHydCfg["GENERAL"].get("normalDist", fallback="")
+    else:
+        normalDist = topoHydCfg["in2TopoHyd_in2TopoHyd_override"].get("normalDist", fallback="")
+    #TODO: read normalDist from c1TIFCfg.ini
 
     # get direction of cross section
     dx = xcoordEnd - xcoordStart
@@ -527,7 +531,7 @@ def getCrossSectionCells(dem, releaseLine):
     # get direction of release line
     dx = xcoordEnd - xcoordStart
     dy = ycoordEnd - ycoordStart
-
+    #TODO: delete
     # exception if the release line is a parallel to the
     # horizontal or the vertical of the DEM grid
     # if dx == 0.0:
