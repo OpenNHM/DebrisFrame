@@ -39,6 +39,7 @@ Computational modules
 .. only:: html
 
     * :doc:`moduleC1TIF`
+    * :doc:`moduleC2PyTopRunDF`
 
 .. toctree::
    :maxdepth: 3
@@ -46,6 +47,7 @@ Computational modules
    :caption: Computational modules
 
    moduleC1TIF.rst
+   moduleC2PyTopRunDF.rst
 
 
 Input modules
