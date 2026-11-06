@@ -65,6 +65,21 @@ Input modules
    moduleIn2TopoHyd.rst
 
 
+Output modules
+=====================
+
+.. only:: html
+
+    * :doc:`moduleOut1Hydrograph`
+
+.. toctree::
+   :maxdepth: 3
+   :hidden:
+   :caption: Output modules
+
+   moduleOut1Hydrograph.rst
+
+
 Indices and tables
 ==================
 

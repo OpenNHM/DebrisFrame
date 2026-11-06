@@ -31,10 +31,10 @@ def test_runC1TIF(tmp_path):
         "reportOneFile": "True",
         "debugPlot": "False",
     }
-    # modCfg, modInfo = cfgUtils.getModuleConfig(com1DFA, fileOverride=cfgFile, modInfo=True)
-    modCfg, modInfo = cfgUtils.getModuleConfig(c1TIF, modInfo=True)
 
-    modCfg["com1DFA_com1DFA_override"]["rho"] = "1000"
+    modCfg, modInfo = cfgUtils.getModuleConfig(c1TIF, modInfo=True, onlyDefault=True)
+
+    modCfg["com1DFA_com1DFA_override"]["rho"] = "2000"
     modCfg["com1DFA_com1DFA_override"]["explicitFriction"] = "0"
     modCfg["com1DFA_com1DFA_override"]["frictModel"] = "Voellmy"
 
@@ -46,7 +46,7 @@ def test_runC1TIF(tmp_path):
 
     assert (outDir / "configurationFiles" / ("%s.ini" % (simDF["simName"].iloc[0]))).is_file()
     assert (outDir / "configurationFiles" / ("allConfigurations.csv")).is_file()
-    assert simDF["rho"].iloc[0] == 1000
+    assert simDF["rho"].iloc[0] == 2000
     assert simDF["explicitFriction"].iloc[0] == 0
     assert simDF["frictModel"].iloc[0] == "Voellmy"
 
