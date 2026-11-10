@@ -137,14 +137,14 @@ folder structure described below.
         DEM raster file
         HYDR/     - hydrograph csv-file
         LEVEE/    - levee points
-        XSECT/    - release line
+        XSECT/    - cross section line
       Outputs/
         in2TopoHyd/
-          initCondHyd.csv
-          crossSectionCells.csv                (optional)
+          <crossSectionName>.csv              (named after the XSECT shapefile)
+          <crossSectionName>_crossSectionCells.csv (optional)
         Plots/
-          crossSection.png
-          ratingCurve.png
+          <crossSectionName>_crossSection.png
+          <crossSectionName>_ratingCurve.png
       Work/
 
 
@@ -217,7 +217,7 @@ Output
 Initial hydraulic conditions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The main output is ``initCondHyd.csv``.
+The main output is ``<crossSectionName>.csv``, named same as the release-line shapefile in ``Inputs/XSECT``
 
 For every wet cross-section cell and hydrograph timestep, the file contains:
 
@@ -234,7 +234,7 @@ The file therefore provides spatially distributed hydraulic initial conditions a
 Cross-section cells
 ^^^^^^^^^^^^^^^^^^^
 
-If ``exportCrossSectionCells = True``, the module additionally writes ``crossSectionCells.csv``.
+If ``exportCrossSectionCells = True``, the module additionally writes ``<crossSectionName>_crossSectionCells.csv``.
 
 The file contains:
 
@@ -249,11 +249,11 @@ Plots
 
 Two plots are generated for plausibility checks.
 
-* ``crossSection.png``
+* ``<crossSectionName>_crossSection.png``
 
   Shows the terrain elevation along the release cross section and the location of the levee points.
 
-* ``ratingCurve.png``
+* ``<crossSectionName>_ratingCurve.png``
 
   Contains both the terrain cross section with the calculated flow-surface elevation steps and the resulting relationship between flow thickness and flow area.
 
@@ -277,4 +277,4 @@ To run
 
 
 The complete workflow reads the DEM and release information, generates the release cross section, calculates the rating curve,
-derives the hydraulic conditions from the discharge hydrograph and writes the resulting initial conditions to ``Outputs/in2TopoHyd/initCondHyd.csv``.
+derives the hydraulic conditions from the discharge hydrograph and writes the resulting initial conditions to ``Outputs/in2TopoHyd/<crossSectionName>.csv``.
