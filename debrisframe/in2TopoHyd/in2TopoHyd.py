@@ -1026,4 +1026,5 @@ def in2TopoHydMain(debrisDir, topoHydCfg, debrisCfg):
     output.to_csv(outputDir / f"{outputName}.csv", sep=",", decimal=".", header=True, index=False)
 
     log.info(
-        f"c1TIF simulation input file derived from debris-flow hydrograph is saved to {outputDir}/{outputName}.csv")
+        f"c1TIF simulation input file derived from debris-flow hydrograph is saved to {outputDir}/{outputName}.csv"
+    )
