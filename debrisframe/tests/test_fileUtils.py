@@ -16,8 +16,12 @@ def _writeHydFile(path, flowArea):
 def test_copyHydrToInput_doesNotOverwriteConsistentFile(tmp_path):
     """Check that an already consistent Inputs/REL hydrograph is left untouched."""
     debrisDir = tmp_path / "avaDir"
-    outputFile = debrisDir / "Outputs" / "in2TopoHyd" / "initCondHyd.csv"
-    inputsHydFile = debrisDir / "Inputs" / "REL" / "initCondHyd.csv"
+    # in2TopoHyd output is named after the release-line shapefile in Inputs/XSECT
+    xsectFile = debrisDir / "Inputs" / "XSECT" / "crossSection.shp"
+    outputFile = debrisDir / "Outputs" / "in2TopoHyd" / "crossSection.csv"
+    inputsHydFile = debrisDir / "Inputs" / "REL" / "crossSection.csv"
+    xsectFile.parent.mkdir(parents=True)
+    xsectFile.touch()
     outputFile.parent.mkdir(parents=True)
     inputsHydFile.parent.mkdir(parents=True)
 
