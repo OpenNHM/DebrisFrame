@@ -44,7 +44,7 @@ def copyHydrToInput(debrisDir):
     if not inputsHydFile.exists():
         shutil.copy2(outputFile, inputsHydFile)
         log.info(
-            f"c1TIF simulation input file derived from debris-flow hydrograph is saved to {inputsHydFile}.csv"
+            f"c1TIF simulation input file derived from debris-flow hydrograph is saved to {inputsHydFile}"
         )
     else:
         outputFileDF = pd.read_csv(outputFile)

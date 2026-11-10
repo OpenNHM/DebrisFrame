@@ -137,11 +137,11 @@ folder structure described below.
         DEM raster file
         HYDR/     - hydrograph csv-file
         LEVEE/    - levee points
-        XSECT/    - release line
+        XSECT/    - cross section line
       Outputs/
         in2TopoHyd/
-          initCondHyd.csv
-          crossSectionCells.csv                (optional)
+          <crossSectionName>.csv              (named after the XSECT shapefile)
+          crossSectionCells.csv               (optional)
         Plots/
           crossSection.png
           ratingCurve.png
@@ -217,7 +217,7 @@ Output
 Initial hydraulic conditions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The main output is ``initCondHyd.csv``.
+The main output is ``<crossSectionName>.csv``, named same as the release-line shapefile in ``Inputs/XSECT``
 
 For every wet cross-section cell and hydrograph timestep, the file contains:
 
@@ -277,4 +277,4 @@ To run
 
 
 The complete workflow reads the DEM and release information, generates the release cross section, calculates the rating curve,
-derives the hydraulic conditions from the discharge hydrograph and writes the resulting initial conditions to ``Outputs/in2TopoHyd/initCondHyd.csv``.
+derives the hydraulic conditions from the discharge hydrograph and writes the resulting initial conditions to ``Outputs/in2TopoHyd/<crossSectionName>.csv``.
