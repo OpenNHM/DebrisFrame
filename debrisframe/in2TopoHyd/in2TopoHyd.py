@@ -936,6 +936,8 @@ def in2TopoHydMain(debrisDir, topoHydCfg, debrisCfg):
     leveePoints = getInputShapeFiles(
         inputDir=inputDir, folder="LEVEE", fileType="Levee points", dem=dem, idField=None
     )
+    # output files are named after the release-line shapefile in Inputs/XSECT
+    outputName = releaseLine["fname"].stem
 
     # +++ 2. get all cells along the release line
     log.info("Get all cells along the release line")
@@ -956,7 +958,7 @@ def in2TopoHydMain(debrisDir, topoHydCfg, debrisCfg):
         path = outputDir / "crossSectionCells.csv"
         file.to_csv(path, sep=",", decimal=".", header=True, index=False)
 
-    pltUtls.plotCrossSection(crossSection=crossSection, outputDir=outputDir)
+    pltUtls.plotCrossSection(crossSection=crossSection, outputDir=outputDir, outputName=outputName)
 
     # +++ 4. calculate hydraulic boundary conditions
     log.info("Calculate hydraulic boundary conditions")
@@ -965,7 +967,9 @@ def in2TopoHydMain(debrisDir, topoHydCfg, debrisCfg):
     ratingCurve = computeRatingCurve(crossSection, topoHydCfg)
 
     # plot cross section and rating curve for plausibility check
-    pltUtls.plotRatingCurve(ratingCurve=ratingCurve, crossSection=crossSection, outputDir=outputDir)
+    pltUtls.plotRatingCurve(
+        ratingCurve=ratingCurve, crossSection=crossSection, outputDir=outputDir, outputName=outputName
+    )
 
     # get hydrograph data
     hydrograph = getHydrograph(inputDir)
@@ -1019,9 +1023,6 @@ def in2TopoHydMain(debrisDir, topoHydCfg, debrisCfg):
             "y": y,
         }
     )
-
-    # name the output file after the release-line shapefile in Inputs/XSECT
-    outputName = releaseLine["fname"].stem
 
     output.to_csv(outputDir / f"{outputName}.csv", sep=",", decimal=".", header=True, index=False)
 

@@ -143,8 +143,8 @@ folder structure described below.
           <crossSectionName>.csv              (named after the XSECT shapefile)
           crossSectionCells.csv               (optional)
         Plots/
-          crossSection.png
-          ratingCurve.png
+          <crossSectionName>_crossSection.png
+          <crossSectionName>_ratingCurve.png
       Work/
 
 
@@ -249,11 +249,11 @@ Plots
 
 Two plots are generated for plausibility checks.
 
-* ``crossSection.png``
+* ``<crossSectionName>_crossSection.png``
 
   Shows the terrain elevation along the release cross section and the location of the levee points.
 
-* ``ratingCurve.png``
+* ``<crossSectionName>_ratingCurve.png``
 
   Contains both the terrain cross section with the calculated flow-surface elevation steps and the resulting relationship between flow thickness and flow area.
 
