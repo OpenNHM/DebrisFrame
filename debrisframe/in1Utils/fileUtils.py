@@ -14,7 +14,7 @@ log = logging.getLogger("avaframe.debrisframe.in1Utils.fileUtils")
 
 def copyHydrToInput(debrisDir):
     """
-    copy the output file from in2TopoHyd into Inputs/REL
+    copy the output file from in2DFHyd into Inputs/REL
     to serve as input data for c1TIF
 
     Parameters
@@ -25,7 +25,7 @@ def copyHydrToInput(debrisDir):
 
     debrisDir = pathlib.Path(debrisDir)
 
-    # in2TopoHyd names its output csv-file after the release-line shapefile in Inputs/XSECT
+    # in2DFHyd names its output csv-file after the release-line shapefile in Inputs/XSECT
     xsectFile, *_ = gI.getAndCheckInputFiles(
         inputDir=debrisDir / "Inputs", folder="XSECT", inputType="Release line"
     )
@@ -35,7 +35,7 @@ def copyHydrToInput(debrisDir):
         raise FileNotFoundError(message)
     outputName = pathlib.Path(xsectFile).stem
 
-    outputFile = debrisDir / "Outputs" / "in2TopoHyd" / f"{outputName}.csv"
+    outputFile = debrisDir / "Outputs" / "in2DFHyd" / f"{outputName}.csv"
     inputsDir = debrisDir / "Inputs" / "REL"
     inputsDir.mkdir(parents=True, exist_ok=True)
 

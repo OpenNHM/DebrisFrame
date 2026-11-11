@@ -12,7 +12,7 @@ import numpy as np
 import avaframe.in3Utils.fileHandlerUtils as fU
 import avaframe.com1DFA.DFAtools as DFAtls
 
-import debrisframe.in2TopoHyd.in2TopoHyd as inTopHyd
+import debrisframe.in2DFHyd.in2DFHyd as inDFHyd
 
 # create local logger under avaframe namespace to use its logging configuration
 log = logging.getLogger("avaframe.debrisframe.out1HelpHyd")
@@ -99,8 +99,8 @@ def out1HelpDFHydMain(debrisDir, debrisCfg):
 
     # get output hydrograph output lines
     inputDir = pathlib.Path(debrisDir, "Inputs")
-    dem = inTopHyd.getDEMRaster(debrisDir, debrisCfg)
-    outLine = inTopHyd.getInputShapeFiles(
+    dem = inDFHyd.getDEMRaster(debrisDir, debrisCfg)
+    outLine = inDFHyd.getInputShapeFiles(
         inputDir=inputDir, folder="OUTHYDR", fileType="Output hydrograph", dem=dem, idField="Station"
     )
 
@@ -116,7 +116,7 @@ def out1HelpDFHydMain(debrisDir, debrisCfg):
             "y": outLine["y"][start:end],
         }
         # get cross section cells
-        crossSection = inTopHyd.getCrossSectionCells(dem, singleLine)
+        crossSection = inDFHyd.getCrossSectionCells(dem, singleLine)
         projCtreX, projCtreY, projCsz = projectCellCenterToLine(singleLine, crossSection)
 
         outputCrossSection[str(id)] = crossSection
