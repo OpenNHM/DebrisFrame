@@ -23,6 +23,6 @@ def test_plotRatingCurve_createsPlotsDirectory(tmp_path):
         "elevLevee": np.array([5.0, 5.0]),
     }
 
-    plotUtils.plotRatingCurve(ratingCurve, crossSection, tmp_path)
+    plotUtils.plotRatingCurve(ratingCurve, crossSection, tmp_path, "crossSection")
 
-    assert (tmp_path / "Plots" / "ratingCurve.png").is_file()
+    assert (tmp_path / "Plots" / "crossSection_ratingCurve.png").is_file()

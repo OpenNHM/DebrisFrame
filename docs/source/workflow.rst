@@ -51,7 +51,7 @@ Inputs:
 
   .. note::
 
-     The ``initCondHyd.csv`` produced by the Hydrograph Starting Condition (in2TopoHyd) tool can be
+     The ``<crossSectionName>.csv`` (named after the ``XSECT`` shapefile) produced by the Hydrograph Starting Condition (in2TopoHyd) tool can be
      used here as the time dependent release input.
 
 * ``Secondary release layer`` (optional) - only one is allowed.
@@ -73,7 +73,7 @@ Computes the initial conditions at a release line via module :py:mod:`in2TopoHyd
 
 .. note::
 
-   The resulting ``initCondHyd.csv`` can be used as the time dependent release input
+   The resulting ``<crossSectionName>.csv`` (named after the ``XSECT`` shapefile) can be used as the time dependent release input
    (``Time dependent release values / release geometry``) for the Thickness integrated flow (c1) tool.
 
 Inputs:

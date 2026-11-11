@@ -805,6 +805,8 @@ def getInputShapeFiles(inputDir, folder, fileType, dem, idField=None):
 
         shapeFile["ID"] = fieldValues
 
+    shapeFile["fname"] = pathlib.Path(fname)
+
     log.info(f"{fileType} used: {fname}")
 
     return shapeFile
@@ -934,6 +936,8 @@ def in2TopoHydMain(debrisDir, topoHydCfg, debrisCfg):
     leveePoints = getInputShapeFiles(
         inputDir=inputDir, folder="LEVEE", fileType="Levee points", dem=dem, idField=None
     )
+    # output files are named after the release-line shapefile in Inputs/XSECT
+    outputName = releaseLine["fname"].stem
 
     # +++ 2. get all cells along the release line
     log.info("Get all cells along the release line")
@@ -951,10 +955,10 @@ def in2TopoHydMain(debrisDir, topoHydCfg, debrisCfg):
         file = pd.DataFrame(
             {"x": crossSection["x"], "y": crossSection["y"], "elev": crossSection["elevation"]}
         )
-        path = outputDir / "crossSectionCells.csv"
+        path = outputDir / f"{outputName}_crossSectionCells.csv"
         file.to_csv(path, sep=",", decimal=".", header=True, index=False)
 
-    pltUtls.plotCrossSection(crossSection=crossSection, outputDir=outputDir)
+    pltUtls.plotCrossSection(crossSection=crossSection, outputDir=outputDir, outputName=outputName)
 
     # +++ 4. calculate hydraulic boundary conditions
     log.info("Calculate hydraulic boundary conditions")
@@ -963,7 +967,9 @@ def in2TopoHydMain(debrisDir, topoHydCfg, debrisCfg):
     ratingCurve = computeRatingCurve(crossSection, topoHydCfg)
 
     # plot cross section and rating curve for plausibility check
-    pltUtls.plotRatingCurve(ratingCurve=ratingCurve, crossSection=crossSection, outputDir=outputDir)
+    pltUtls.plotRatingCurve(
+        ratingCurve=ratingCurve, crossSection=crossSection, outputDir=outputDir, outputName=outputName
+    )
 
     # get hydrograph data
     hydrograph = getHydrograph(inputDir)
@@ -1018,4 +1024,8 @@ def in2TopoHydMain(debrisDir, topoHydCfg, debrisCfg):
         }
     )
 
-    output.to_csv(outputDir / "initCondHyd.csv", sep=",", decimal=".", header=True, index=False)
+    output.to_csv(outputDir / f"{outputName}.csv", sep=",", decimal=".", header=True, index=False)
+
+    log.info(
+        f"c1TIF simulation input file derived from debris-flow hydrograph is saved to {outputDir}/{outputName}.csv"
+    )
