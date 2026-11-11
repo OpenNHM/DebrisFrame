@@ -955,7 +955,7 @@ def in2TopoHydMain(debrisDir, topoHydCfg, debrisCfg):
         file = pd.DataFrame(
             {"x": crossSection["x"], "y": crossSection["y"], "elev": crossSection["elevation"]}
         )
-        path = outputDir / "crossSectionCells.csv"
+        path = outputDir / f"{outputName}_crossSectionCells.csv"
         file.to_csv(path, sep=",", decimal=".", header=True, index=False)
 
     pltUtls.plotCrossSection(crossSection=crossSection, outputDir=outputDir, outputName=outputName)

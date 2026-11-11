@@ -141,7 +141,7 @@ folder structure described below.
       Outputs/
         in2TopoHyd/
           <crossSectionName>.csv              (named after the XSECT shapefile)
-          crossSectionCells.csv               (optional)
+          <crossSectionName>_crossSectionCells.csv (optional)
         Plots/
           <crossSectionName>_crossSection.png
           <crossSectionName>_ratingCurve.png
@@ -234,7 +234,7 @@ The file therefore provides spatially distributed hydraulic initial conditions a
 Cross-section cells
 ^^^^^^^^^^^^^^^^^^^
 
-If ``exportCrossSectionCells = True``, the module additionally writes ``crossSectionCells.csv``.
+If ``exportCrossSectionCells = True``, the module additionally writes ``<crossSectionName>_crossSectionCells.csv``.
 
 The file contains:
 
