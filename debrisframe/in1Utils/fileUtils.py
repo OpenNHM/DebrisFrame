@@ -12,7 +12,7 @@ log = logging.getLogger("avaframe.debrisframe.in1Utils.fileUtils")
 
 def copyHydrToInput(debrisDir):
     """
-    copy the output file from in2TopoHyd into Inputs/REL
+    copy the output file from in2DFHyd into Inputs/REL
     to serve as input data for c1TIF
 
     Parameters
@@ -23,7 +23,7 @@ def copyHydrToInput(debrisDir):
 
     debrisDir = pathlib.Path(debrisDir)
 
-    outputFile = debrisDir / "Outputs" / "in2TopoHyd" / "initCondHyd.csv"
+    outputFile = debrisDir / "Outputs" / "in2DFHyd" / "initCondHyd.csv"
     inputsDir = debrisDir / "Inputs" / "REL"
     inputsDir.mkdir(parents=True, exist_ok=True)
 

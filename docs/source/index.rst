@@ -55,14 +55,14 @@ Input modules
 
 .. only:: html
 
-    * :doc:`moduleIn2TopoHyd`
+    * :doc:`moduleIn2DFHyd`
 
 .. toctree::
    :maxdepth: 3
    :hidden:
    :caption: Input modules
 
-   moduleIn2TopoHyd.rst
+   moduleIn2DFHyd.rst
 
 
 Helper functions

@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 
 # local imports
 import avaframe.in3Utils.fileHandlerUtils as fU
+import avaframe.out3Plot.plotUtils as pU
 
 
 def plotCrossSection(crossSection, outputDir):
@@ -20,7 +21,7 @@ def plotCrossSection(crossSection, outputDir):
         the elevation of the cross-section cells and levee points,
         the path along (distance) along the cross-section cells
     outputDir: str or Path
-        path to output directory of in2TopoHyd module
+        path to output directory of in2DFHyd module
 
     Returns
     --------
@@ -29,7 +30,7 @@ def plotCrossSection(crossSection, outputDir):
     """
 
     # plot cross section
-    fig, ax = plt.subplots(figsize=(10, 8))
+    fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
 
     ax.plot(crossSection["s"], crossSection["elevation"])
     ax.scatter(crossSection["sLevee"], crossSection["elevLevee"], color="red", label="Levee points")
@@ -46,6 +47,7 @@ def plotCrossSection(crossSection, outputDir):
     fU.makeADir(path)
 
     fig.savefig(path / "crossSection.png")
+    plt.close(fig)
 
 
 def plotRatingCurve(ratingCurve, crossSection, outputDir):
@@ -64,7 +66,7 @@ def plotRatingCurve(ratingCurve, crossSection, outputDir):
             the elevation of the cross-section cells,
             the path along (distance) along the cross-section cells
     outputDir: str or Path
-            path to output directory of in2TopoHyd module
+            path to output directory of in2DFHyd module
 
     Returns
     --------
@@ -79,7 +81,7 @@ def plotRatingCurve(ratingCurve, crossSection, outputDir):
     xmax = ratingCurve["xmax"]
 
     # plot cross section
-    fig, ax = plt.subplots(ncols=1, nrows=2, figsize=(10, 8))
+    fig, ax = plt.subplots(ncols=1, nrows=2, figsize=(pU.figW, pU.figH))
 
     ax[0].plot(crossSection["s"], crossSection["elevation"])
     ax[0].scatter(crossSection["sLevee"], crossSection["elevLevee"], color="red", label="Levee points")
@@ -110,3 +112,4 @@ def plotRatingCurve(ratingCurve, crossSection, outputDir):
     path = outputDir / "Plots"
     fU.makeADir(path)
     fig.savefig(path / "ratingCurve.png")
+    plt.close(fig)

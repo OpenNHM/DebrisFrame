@@ -1,5 +1,5 @@
 """
-Pytest for module in2TopoHyd
+Pytest for module in2DFHyd
 """
 
 import configparser
@@ -9,10 +9,10 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from debrisframe.in2TopoHyd import in2TopoHyd
+from debrisframe.in2DFHyd import in2DFHyd
 
 
-def _topoHydCfg(dElev="0.5"):
+def _inputHydCfg(dElev="0.5"):
     cfg = configparser.ConfigParser()
     cfg["GENERAL"] = {"dElev": dElev}
     return cfg
@@ -38,7 +38,7 @@ def _planarDEM(gradient=0.1, cellSize=2.0, nrows=20, ncols=20):
 def _verticalCrossSection(dem, x=10.0, yStart=2.0, yEnd=10.0):
     """Return a cross section along a vertical release line at constant x."""
     releaseLine = {"x": np.array([x, x]), "y": np.array([yStart, yEnd])}
-    crossSection = in2TopoHyd.getCrossSectionCells(dem, releaseLine)
+    crossSection = in2DFHyd.getCrossSectionCells(dem, releaseLine)
     crossSection["s"] = np.arange(len(crossSection["x"]), dtype=float) * dem["header"]["cellsize"]
     crossSection["idLevee"] = [1, len(crossSection["x"]) - 2]
     return crossSection
@@ -64,7 +64,7 @@ def test_getCrossSectionCells_selects_nearestCellCenter():
     x = 1003.4
     releaseLine = {"x": np.array([x, x]), "y": np.array([2003.0, 2009.0])}
 
-    crossSection = in2TopoHyd.getCrossSectionCells(dem, releaseLine)
+    crossSection = in2DFHyd.getCrossSectionCells(dem, releaseLine)
 
     # the nearest cell center is at col 1 (x = 1003), not col 2 (x = 1005)
     expectedCol = int(np.round((x - xllcenter) / cellSize))
@@ -86,7 +86,7 @@ def test_getCrossSectionCells_snapsSlantedLineToCellCenters():
     }
     releaseLine = {"x": np.array([1001.0, 1007.0]), "y": np.array([2001.0, 2005.0])}
 
-    crossSection = in2TopoHyd.getCrossSectionCells(dem, releaseLine)
+    crossSection = in2DFHyd.getCrossSectionCells(dem, releaseLine)
 
     resid = (crossSection["y"] - yllcenter) / cellSize
     assert np.allclose(resid, np.round(resid))
@@ -107,7 +107,7 @@ def test_computeRatingCurve_flatChannelRaises():
     }
 
     with pytest.raises(ValueError, match="channel"):
-        in2TopoHyd.computeRatingCurve(crossSection, _topoHydCfg())
+        in2DFHyd.computeRatingCurve(crossSection, _inputHydCfg())
 
 
 def test_computeRatingCurve_returnsNonEmptyForValidChannel():
@@ -119,7 +119,7 @@ def test_computeRatingCurve_returnsNonEmptyForValidChannel():
         "elevLevee": np.array([11.0, 11.0]),
     }
 
-    ratingCurve = in2TopoHyd.computeRatingCurve(crossSection, _topoHydCfg())
+    ratingCurve = in2DFHyd.computeRatingCurve(crossSection, _inputHydCfg())
 
     assert len(ratingCurve["flowArea"]) > 0
     assert np.all(np.diff(ratingCurve["flowArea"]) > 0)
@@ -129,10 +129,10 @@ def test_computeSlopeAlongChannel_planarDEM():
     """Check the central-difference slope recovers the DEM gradient."""
     dem = _planarDEM(gradient=0.1)
     crossSection = _verticalCrossSection(dem)
-    cfg = _topoHydCfg()
+    cfg = _inputHydCfg()
     cfg["GENERAL"]["normalDist"] = "4"
 
-    slope = in2TopoHyd.computeSlopeAlongChannel(dem, crossSection, cfg)
+    slope = in2DFHyd.computeSlopeAlongChannel(dem, crossSection, cfg)
 
     assert slope == pytest.approx(0.1, abs=1e-6)
 
@@ -141,10 +141,10 @@ def test_getFlowDirection_pointsDownslope():
     """Check the flow direction is a unit vector pointing down the DEM gradient."""
     dem = _planarDEM(gradient=0.1)
     crossSection = _verticalCrossSection(dem)
-    cfg = _topoHydCfg()
+    cfg = _inputHydCfg()
     cfg["GENERAL"]["normalDist"] = "4"
 
-    flwDir = in2TopoHyd.getFlowDirection(crossSection, dem, cfg)
+    flwDir = in2DFHyd.getFlowDirection(crossSection, dem, cfg)
 
     assert np.linalg.norm(flwDir) == pytest.approx(1.0)
     # downslope is -x for an elevation gradient along +x
@@ -167,7 +167,7 @@ def test_assignToWetCell_conservesReleaseVolume():
     releaseThickness = np.array([1.5])
     releaseVolume = np.array([6.0])
 
-    wetCells = in2TopoHyd.assignToWetCell(
+    wetCells = in2DFHyd.assignToWetCell(
         crossSection, dem, ratingCurve, releaseThickness, releaseVolume
     )
 
@@ -178,7 +178,7 @@ def test_assignToWetCell_conservesReleaseVolume():
 
 def test_computeRelFlowThVel_unsupportedVelTypeRaises():
     """Check an unsupported velType raises a clear error instead of UnboundLocalError."""
-    cfg = _topoHydCfg()
+    cfg = _inputHydCfg()
     cfg["GENERAL"]["slope"] = "0.1"
     cfg["GENERAL"]["velType"] = "notAMethod"
     ratingCurve = {"thickness": np.array([0.5, 1.0]), "flowArea": np.array([1.0, 4.0])}
@@ -186,7 +186,7 @@ def test_computeRelFlowThVel_unsupportedVelTypeRaises():
     crossSection = _verticalCrossSection(dem)
 
     with pytest.raises(ValueError, match="velType"):
-        in2TopoHyd.computeRelFlowThVel(np.array([1.0, 2.0]), cfg, ratingCurve, dem, crossSection)
+        in2DFHyd.computeRelFlowThVel(np.array([1.0, 2.0]), cfg, ratingCurve, dem, crossSection)
 
 
 def test_assignCrossSectionCoords_picksNearestCell():
@@ -199,7 +199,7 @@ def test_assignCrossSectionCoords_picksNearestCell():
     }
     leveePoints = {"x": np.array([2.6, 5.4]), "y": np.array([0.0, 0.0])}
 
-    result = in2TopoHyd.assignCrossSectionCoords(leveePoints, crossSection)
+    result = in2DFHyd.assignCrossSectionCoords(leveePoints, crossSection)
 
     assert result["idLevee"] == [1, 3]
     assert np.all(result["elevLevee"] == np.array([4.0, 4.0]))
@@ -216,6 +216,6 @@ def test_getHydrograph_computesReleaseVolume(tmp_path):
 
     with warnings.catch_warnings():
         warnings.simplefilter("error", DeprecationWarning)
-        hydrograph = in2TopoHyd.getHydrograph(inputDir)
+        hydrograph = in2DFHyd.getHydrograph(inputDir)
 
     assert np.allclose(hydrograph["relVol"], [1.0, 3.0])

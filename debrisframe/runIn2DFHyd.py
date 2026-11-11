@@ -1,5 +1,5 @@
 """
-Run the In2TopoHyd module to get the initial conditions at the release line
+Run the In2DFHyd module to get the initial conditions at the release line
 """
 
 # load modules
@@ -14,12 +14,12 @@ from avaframe.in3Utils import logUtils
 # import computation modules
 from debrisframe.c1TIF import c1TIF
 import debrisframe as debf
-from debrisframe.in2TopoHyd import in2TopoHyd
+from debrisframe.in2DFHyd import in2DFHyd
 
 
-def runIn2TopoHyd(debrisDir=""):
+def runIn2DFHyd(debrisDir=""):
     """
-    Run in2TopoHyd with only a debris flow directory as input
+    Run in2DFHyd with only a debris flow directory as input
 
     Parameters
     ----------
@@ -37,7 +37,7 @@ def runIn2TopoHyd(debrisDir=""):
     startTime = time.time()
 
     # log file name; leave empty to use default runLog.log
-    logName = "runIn2TopoHyd"
+    logName = "runIn2DFHyd"
 
     # Load debris flow directory from general configuration file
     modPath = pathlib.Path(debf.__file__).resolve().parent
@@ -58,12 +58,12 @@ def runIn2TopoHyd(debrisDir=""):
     DebrisCfg = cfgUtils.getModuleConfig(c1TIF, onlyDefault=True)
 
     # load module config
-    # topoHydCfg
-    topoHydCfg = cfgUtils.getModuleConfig(in2TopoHyd, debrisDir, toPrint=False)
+    # inputHydCfg
+    inputHydCfg = cfgUtils.getModuleConfig(in2DFHyd, debrisDir, toPrint=False)
 
     # ----------------
-    # Run in2TopoHyd
-    in2TopoHyd.in2TopoHydMain(debrisDir, topoHydCfg, DebrisCfg)
+    # Run in2DFHyd
+    in2DFHyd.in2DFHydMain(debrisDir, inputHydCfg, DebrisCfg)
 
     # Print time needed
     endTime = time.time()
@@ -84,4 +84,4 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-    runIn2TopoHyd(str(args.debrisdir))
+    runIn2DFHyd(str(args.debrisdir))

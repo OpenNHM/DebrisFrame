@@ -1,16 +1,17 @@
-in2TopoHyd: Initial Hydraulic Conditions Module
+in2DFHyd: Initial Hydraulic Conditions Module
 ================================================
 
-:py:mod:`in2TopoHyd` is a module for deriving initial hydraulic conditions for the :py:mod:`c1TIF` computation module
-for a debris-flow hydrograph at a prescribed release line. The module combines the topography of the release area with
-a time-dependent discharge hydrograph (Topo-Hydrograph) to calculate the corresponding flow thickness and flow velocity at the release line.
+:py:mod:`in2DFHyd` is a module for deriving initial hydraulic conditions for the :py:mod:`c1TIF` computation module
+for a debris-flow hydrograph at a prescribed release line. The module combines the terrain :term:`cross section` geometry with
+a :term:`debris-flow hydrograph` to calculate the corresponding flow thickness and flow velocity at the release line.
 
-The hydraulic conditions are derived from the terrain cross section along the release line.
+The hydraulic conditions are derived from the terrain cross section along the release line and the input hydrograph.
 A rating curve is calculated from the cross-sectional geometry, relating flow thickness to flow area.
-For each discharge value of the input hydrograph, the module determines the corresponding mean flow velocity and flow thickness.
+For each :term:`discharge` value of the input hydrograph, the module determines the corresponding mean flow velocity and flow thickness.
 The flow thickness is then distributed over the wetted cells of the release cross section.
 
-The resulting initial conditions contain the flow thickness as well as the velocity components in x, y and z direction for every wet cell and every hydrograph timestep.
+The resulting initial conditions contain the flow thickness as well as the velocity components in x, y and z direction and
+the coordinates of the cell centers for every wet cell and every hydrograph timestep.
 
 .. Note::
   The module is still under development and the functions are not fully tested yet!
@@ -23,14 +24,14 @@ The hydraulic boundary conditions are derived in several steps.
 1. Terrain cross section
 ^^^^^^^^^^^^^^^^^^^^^
 
-The release line constists of a starting and an ending point and is first mapped to the DEM raster grid.
+The release line consists of a starting and an ending point and is first mapped to the DEM raster grid.
 The two release-line points are assigned to the nearest raster-cell coordinates. All DEM cells along the resulting line are then extracted.
 For each cross-section cell, the module stores its x and y coordinates and its terrain elevation. The distance along the cross section is calculated and used for the subsequent hydraulic calculations.
 
 2. Levee points
 ^^^^^^^^^^^^^^^^
 
-Two so called levee points define the left and right top of the channel embankment which constrain the flow to the main channel.
+Two so-called levee points define the left and right top of the channel embankment which constrain the flow to the main channel.
 Only this part of the cross section  is considered for the calculation of the flow area.
 
 3. Rating curve
@@ -53,22 +54,28 @@ It is subsequently used to convert the flow area required for a given discharge 
   The current implementation provides the approach after :cite:`Rickenmann1999` as the only available method for calculating the mean flow velocity.
 
 For each discharge value, the mean flow velocity is calculated.
-The currently implemented approach :cite:`Rickenmann1999` calculates the veloctiy [m/s] as:
+The currently implemented approach :cite:`Rickenmann1999` calculates the velocity [m/s] as:
 
 .. math::
   v = 2.1 \cdot Q^{0.33} \cdot S^{0.33}
   :label: velRickenmann
 
 where :math:`Q` is the discharge [m³/s] and :math:`S` is the mean channel slope [m/m] in flow direction.
-The slope can either be supplied through the configuration file via :math:`slope` or calculated automatically.
-For the automatic calculation, two additional cross sections are generated in a predefined normal distance on each side of the release line.
-The mean elevations between the levee points of this virtual cross sections are used to estimate the slope using a central difference:
+The slope can either be supplied through the configuration file ``in2DFHydCfg.ini`` via ``slope`` or calculated automatically.
+For the automatic calculation, two additional cross sections are generated, one on each side of the release line, at a predefined normal distance.
+The mean elevations between the levee points of these virtual cross sections are used to estimate the slope using a central difference:
 
 .. math::
-  S = \frac{Elev_j - Elev_i}{2d}
+  S = \frac{|Elev_j - Elev_i|}{2d}
   :label: slope
 
-where `d` is the normal distance between the release line and the virtual cross section.
+where `d` is the normal distance between the release line and the virtual cross section. `d` is calculated as:
+
+.. math::
+  d = 2 \cdot \sqrt{csz^2 + csz^2}
+  :label: normal distance
+
+where `csz` is the raster cell size. The normal distance ``normalDist`` can be set directly in ``in2DFHydCfg.ini``.
 
 5. Flow area and flow thickness
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -85,37 +92,68 @@ the flow thickness corresponding to the required flow area is obtained by interp
 .. Note::
   If the required flow area exceeds the maximum flow area represented by the rating curve,
   the module stops and reports that the discharge is overtopping the debris-flow channel.
+  At the moment, the input discharge must not exceed the channel's transport capacity.
 
 6. Distribution over the release cross section
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The calculated flow thickness represents the thickness measured from the lowest point of the channel.
-For each timestep, the corresponding surface elevation :math:`Elev_{surf}` [m] is calculated as:
+The calculated flow thickness :math:`FT` represents the thickness measured from the lowest point of the channel.
+For each timestep, the corresponding flow surface elevation :math:`Elev_{surf}` [m] is calculated as:
 
 .. math::
-  Elev_{surf} = Elev_{min} + \text{flow thickness}.
+  Elev_{surf} = Elev_{min} + FT.
+  :label: surface elevation
 
-All cross-section cells with an elevation below this surface are considered wet. For each wet cell, the local flow thickness is calculated as
-the difference between the flow surface elevation and the terrain elevation.
-Consequently, the resulting initial condition is spatially distributed across the cross section
-rather than assigning one constant thickness to every cell.
+Any cross-section cells below this surface elevation are considered wet.
+The release volume per time step :math:`V(t)` is distributed among the wet cells by assigning a coefficient value to each cell.
+:math:`V(t)` is computed by trapezoidal integration:
+
+.. math::
+  V(t) = \frac{Q(t) + Q(t + \Delta t)}{2} \cdot \Delta t.
+  :label: volume per time step
+
+The coefficient :math:`coeff` is defined as the ratio of the flow area of a cell :math:`A_{cell}` and the total flow area of the cross section :math:`A_{tot}`:
+
+.. math::
+  coeff_{cell} = \frac{A_{cell}}{A_{tot}}.
+  :label: distribution coefficient
+
+Subsequently, :math:`V(t)` is multiplied by :math:`coeff_{cell}` which results in the release volume per cell and time step:
+
+.. math::
+  V(t)_{cell} = V(t) \cdot coeff_{cell}.
+  :label: cell volume
+
+To ensure mass consistency, for each wet cell, the local flow thickness :math:`FT_{cell}` is calculated as the release volume per time step :math:`V(t)`
+divided by the actual cell area :math:`acsz`:
+
+.. math::
+  FT_{cell} = \frac{V(t)_{cell}}{acsz_{cell}}
+  :label: flow thickness
+
+The sum of the cell volumes :math:`\sum V(t)_{cell}` corresponds to the total release volume per time step :math:`V(t)_{tot}`.
 
 7. Flow direction
 ^^^^^^^^^^^^^^
 
-The flow direction is by definition perpendicular to the release line.
+By definition, the flow direction is perpendicular to the release line. A line limited by two points (:math:`P_1 = (x_{P1}, y_{P1}), P_2 = (x_{P2}, y_{P2})`)
+has two possible normal vectors:
+
+.. math::
+  n_1 = (-\Delta y, \Delta x), n_2 = (\Delta y, -\Delta x)
+  :label: normal vector 
+
+In a predefined normal distance the program generates two additional cross sections on each side of the release line (analogous to the calculation of the channel slope).
+The mean elevations of these virtual cross sections are then compared to determine which of the two normal directions corresponds to the downslope direction.
 
 .. Note::
-  It is in the responsibility of the user to create a release line normal to the channel flow direction!
+  It is the responsibility of the user to create a release line normal to the channel flow direction!
   Otherwise correct results cannot be guaranteed.
-
-In a predefined normal distance the program generates two additional cross sections on each side of the release line (compare to calculation of slope).
-The mean elevations of this virtual cross sections are then compared to determine which of the two possible normal directions corresponds to the downslope direction.
 
 Input
 ---------
 
-The :py:mod:`in2TopoHyd` module requires a
+The :py:mod:`in2DFHyd` module requires a
 
 * **digital elevation model as raster file**,
 
@@ -125,7 +163,7 @@ The :py:mod:`in2TopoHyd` module requires a
 
 * **and levee points**.
 
-:py:mod:`in2TopoHyd` calculations are performed within a process directory, organized with the
+:py:mod:`in2DFHyd` calculations are performed within a process directory, organized with the
 folder structure described below.
 
 .. Note::
@@ -139,7 +177,7 @@ folder structure described below.
         LEVEE/    - levee points
         XSECT/    - release line
       Outputs/
-        in2TopoHyd/
+        in2DFHyd/
           initCondHyd.csv
           crossSectionCells.csv                (optional)
         Plots/
@@ -168,12 +206,12 @@ Levee points
 The module requires exactly one point shapefile in ``Inputs/LEVEE`` whose filename ends with ``*levee.shp``.
 The levee points define the lateral limits of the debris-flow channel. Each levee point is assigned to the nearest DEM cell of the release cross section.
 
-Discharge hydrograph
+Debris-flow hydrograph
 ^^^^^^^^^^^^^^^^^^^^
 
 The time-dependent discharge is read from the hydrograph file (.csv) in ``Inputs/HYDR``.
 
-The hydrograph must contain the columns:
+The file must contain the columns:
 
 * `timestep` — timestep of the discharge value [s]
 * `discharge` — discharge value [m³/s]
@@ -183,7 +221,7 @@ The discharge values are used to derive the hydraulic conditions for every times
 Model configuration
 --------------------
 
-The model configuration is read from ``in2TopoHydCfg.ini``. A local copy can be created and modified for individual process directories.
+The model configuration is read from ``in2DFHydCfg.ini``. A local copy can be created and modified for individual process directories.
 
 The available parameters are:
 
@@ -209,15 +247,13 @@ The available parameters are:
   
   If set to ``True``, the coordinates and elevations of the cross-section cell centers are exported as a CSV file for plausibility checking.
 
-The default parameter values are stored in ``in2TopoHydCfg.ini``.
-
 Output
 -------
 
 Initial hydraulic conditions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The main output is ``initCondHyd.csv``.
+The main output is ``initCondHyd.csv`` and provides spatially distributed hydraulic initial conditions along the release line.
 
 For every wet cross-section cell and hydrograph timestep, the file contains:
 
@@ -228,8 +264,6 @@ For every wet cross-section cell and hydrograph timestep, the file contains:
 * `velocityZ` — z-component of flow velocity [m/s]
 * `x` — coordinate of the wet cell
 * `y` — coordinate of the wet cell
-
-The file therefore provides spatially distributed hydraulic initial conditions along the release line.
 
 Cross-section cells
 ^^^^^^^^^^^^^^^^^^^
@@ -268,13 +302,15 @@ To run
 
 * create a process directory with the required DEM, release line, levee points and hydrograph
 
-* copy ``in2TopoHyd/in2TopoHydCfg.ini`` to ``in2TopoHyd/local_in2TopoHydCfg.ini`` and, if desired, change the configuration settings
+* copy ``in2DFHyd/in2DFHydCfg.ini`` to ``in2DFHyd/local_in2DFHydCfg.ini`` and, if desired, change the configuration settings
 
 * run:
   ::
 
-    pixi run python runIn2TopoHyd.py
+    pixi run python runIn2DFHyd.py
 
 
 The complete workflow reads the DEM and release information, generates the release cross section, calculates the rating curve,
-derives the hydraulic conditions from the discharge hydrograph and writes the resulting initial conditions to ``Outputs/in2TopoHyd/initCondHyd.csv``.
+derives the hydraulic conditions from the discharge hydrograph and writes the resulting initial conditions to ``Outputs/in2DFHyd/initCondHyd.csv``.
+
+To run the module from :mod:`c1TIF`, follow the instructions in :ref:`moduleC1TIF:Run from hydrograph`

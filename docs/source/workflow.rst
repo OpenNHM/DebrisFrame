@@ -16,7 +16,7 @@ Replace ``[YOURDIR]`` and ``[DEBRIS]`` with the directory from your installation
 debris-flow directory, respectively.
 
 Make sure you have all the input data you need to run the modules you want to execute (`c1TIF <file:///C:/Users/jlahrssen/DebrisFrame/docs/_build/html/moduleC1TIF.html>`_,
-:ref:`moduleIn2TopoHyd:Input`).
+:ref:`moduleIn2DFHyd:Input`).
 
 If desired, you can modify the configuration settings as described in :ref:`moduleC1TIF:Model configuration`.
 
@@ -51,7 +51,7 @@ Inputs:
 
   .. note::
 
-     The ``initCondHyd.csv`` produced by the Hydrograph Starting Condition (in2TopoHyd) tool can be
+     The ``initCondHyd.csv`` produced by the Hydrograph Starting Condition (in2DFHyd) tool can be
      used here as the time dependent release input.
 
 * ``Secondary release layer`` (optional) - only one is allowed.
@@ -66,10 +66,10 @@ Outputs:
 * ``Output layer`` - simulation result.
 
 
-Hydrograph Starting Condition (in2TopoHyd)
+Hydrograph Starting Condition (in2DFHyd)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Computes the initial conditions at a release line via module :py:mod:`in2TopoHyd`.
+Computes the initial conditions at a release line via module :py:mod:`in2DFHyd`.
 
 .. note::
 
@@ -84,8 +84,8 @@ Inputs:
 * ``Hydrograph csv file`` (required) - csv file with the columns ``timestep`` (values in [s]) and
   ``discharge`` (values in [m³/s]).
 * ``Destination folder`` (required) - process directory.
-* ``Expert configuration file`` (advanced, optional) - ``in2TopoHydCfg.ini``. See
-  :ref:`moduleIn2TopoHyd:Model configuration`.
+* ``Expert configuration file`` (advanced, optional) - ``in2DFHydCfg.ini``. See
+  :ref:`moduleIn2DFHyd:Model configuration`.
 
 Outputs:
 
@@ -100,7 +100,7 @@ edited and supplied as the expert configuration file when running the correspond
 
 Inputs:
 
-* ``Module`` (required) - select either ``c1TIF`` or ``in2TopoHyd``.
+* ``Module`` (required) - select either ``c1TIF`` or ``in2DFHyd``.
 * ``Destination file`` (required) - ini file to write.
 
 Outputs:
@@ -116,9 +116,9 @@ Basically, the meaning of the single parameters in ``c1TIF/c1TIFCfg.ini`` is exp
 However, the following ones are especially relevant because they control the workflow for :py:mod:`c1TIF`.
 
 * To select the Hydrograph starting condition for :py:mod:`c1TIF`, set ``inputHydrograph = True`` (and ``timeDependentRelease = True`` -> default).
-  This setting uses the ``in2TopoHyd`` module to compute the starting condition.
-  The section ``[in2TopoHyd_in2TopoHyd_override]`` of the configuration file lists the specific parameters for the module.
-  Detailed information about these parameters can be found in :ref:`moduleIn2TopoHyd:Model configuration`.
+  This setting uses the ``in2DFHyd`` module to compute the starting condition.
+  The section ``[in2DFHyd_in2DFHyd_override]`` of the configuration file lists the specific parameters for the module.
+  Detailed information about these parameters can be found in :ref:`moduleIn2DFHyd:Model configuration`.
   If ``timeDependentRelease`` is set to ``False``, the starting condition is calculated from a `release area <https://docs.avaframe.org/en/latest/moduleCom1DFA.html#input>`_.
 
 
