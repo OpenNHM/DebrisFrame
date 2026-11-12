@@ -19,7 +19,8 @@ General
 
     * :doc:`introduction`
     * :doc:`installation`
-    * :doc:`workflow`
+    * :doc:`scriptBasedUsage`
+    * :doc:`qgisConnector`
     * :doc:`release`
 
 .. toctree::
@@ -29,7 +30,8 @@ General
 
    introduction.rst
    installation.rst
-   workflow.rst
+   scriptBasedUsage.rst
+   qgisConnector.rst
    release.rst
 
 
@@ -79,6 +81,22 @@ Helper functions
 
    out1HelpDFHyd.rst
 
+
+Workflow
+=====================
+
+.. only:: html
+
+    * :doc:`workflowIn2DFHyd`
+    * :doc:`workflowC1TIF`
+
+.. toctree::
+   :maxdepth: 3
+   :hidden:
+   :caption: Workflow
+
+   workflowIn2DFHyd.rst
+   workflowC1TIF.rst
 
 Indices and tables
 ==================
