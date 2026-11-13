@@ -10,7 +10,7 @@ import avaframe.in3Utils.fileHandlerUtils as fU
 import avaframe.out3Plot.plotUtils as pU
 
 
-def plotCrossSection(crossSection, outputDir):
+def plotCrossSection(crossSection, outputDir, outputName):
     """
     This function plots the terrain cross section
 
@@ -22,6 +22,8 @@ def plotCrossSection(crossSection, outputDir):
         the path along (distance) along the cross-section cells
     outputDir: str or Path
         path to output directory of in2DFHyd module
+    outputName: str
+        name of the cross section-line shapefile, used as prefix of the plot name
 
     Returns
     --------
@@ -46,11 +48,11 @@ def plotCrossSection(crossSection, outputDir):
     path = outputDir / "Plots"
     fU.makeADir(path)
 
-    fig.savefig(path / "crossSection.png")
+    fig.savefig(path / f"{outputName}_crossSection.png")
     plt.close(fig)
 
 
-def plotRatingCurve(ratingCurve, crossSection, outputDir):
+def plotRatingCurve(ratingCurve, crossSection, outputDir, outputName):
     """
     This function plots the terrain cross section
     and the corresponding rating curve
@@ -67,6 +69,8 @@ def plotRatingCurve(ratingCurve, crossSection, outputDir):
             the path along (distance) along the cross-section cells
     outputDir: str or Path
             path to output directory of in2DFHyd module
+    outputName: str
+            name of the cross section-line shapefile, used as prefix of the plot name
 
     Returns
     --------
@@ -111,5 +115,5 @@ def plotRatingCurve(ratingCurve, crossSection, outputDir):
 
     path = outputDir / "Plots"
     fU.makeADir(path)
-    fig.savefig(path / "ratingCurve.png")
+    fig.savefig(path / f"{outputName}_ratingCurve.png")
     plt.close(fig)

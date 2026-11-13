@@ -12,8 +12,8 @@ Inputs:
 
 .. note::
 
-    The ``initCondHyd.csv`` produced by the Hydrograph Starting Condition (in2DFHyd) tool can be
-    used here as the time-dependent release input.
+    The ``<crossSectionName>.csv`` (named after the ``XSECT`` shapefile) produced by the hydrograph starting condition (in2DFHyd) tool can be
+     used here as the time dependent release input.
 
 * ``Secondary release layer`` (optional) - only one is allowed.
 * ``Entrainment layer`` (optional) - only one is allowed.
