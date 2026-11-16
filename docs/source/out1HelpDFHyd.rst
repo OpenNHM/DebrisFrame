@@ -1,16 +1,16 @@
 out1HelpDFHyd: Visualization of result hydrographs
 =======================================
 
-:py:mod:`out1HelpDFHyd` is a helper function for extracting discharge hydrographs at user-defined
+:py:mod:`out1HelpDFHyd` is a helper function for extracting debris-flow hydrographs at user-defined
 cross sections from debris-flow simulations performed with :py:mod:`c1TIF`.
 
-During the simulation, the discharge through each cross section is calculated
+During the simulation, the :term:`discharge` through each :term:`cross section` is calculated
 from the simulated flow thickness and velocity fields. The results are saved as
 time-dependent discharge tables and plotted together with the cumulative flow volume.
 Several output cross sections can be evaluated in one simulation.
 
 .. Note::
-   The helper function is still under development and all functions are not fully tested yet!
+   The helper function is still under development and not all functions have been fully tested yet!
 
 Theory
 ------
@@ -21,7 +21,7 @@ Theory
 The output cross sections are defined by line geometries in a shapefile.
 Each line is identified by a unique ``station`` attribute and represented by a
 starting and an ending point. The lines are mapped to the DEM raster grid using
-:py:func:`in2TopoHyd.getCrossSectionCells`, which identifies the raster cells
+:py:func:`in2DFHyd.getCrossSectionCells`, which identifies the raster cells
 along each cross section and returns their row and column indices.
 
 For each cross section, the function calculates a horizontal unit normal vector
@@ -59,7 +59,7 @@ at the selected raster cells.
 
 Because ``FT`` is the thickness measured normal to the terrain, it is converted
 to the vertical flow depth :math:`h_i` using the vertical component
-:math:`n_{z,i}^{\mathrm{DEM}}` of the normalized terrain normal:
+:math:`n_{z,i}` of the normalized terrain normal:
 
 .. math::
 
@@ -87,8 +87,8 @@ trapezoidal integration:
 
 .. math::
 
-   V_k = \sum_{j=0}^{k-1}
-   \frac{Q_j + Q_{j+1}}{2}\,\Delta t.
+   V = \sum_{j=0}^{k-1}
+   \frac{Q_j + Q_{j+1}}{2} \cdot \Delta t.
 
 Input
 -----
@@ -112,7 +112,7 @@ The files are organized within a DebrisFrame process directory:
      Outputs/
        out1HelpDFHyd/
          outputCoordinates.csv      # coordinates of cross-section cell centers and projected cell centers
-                                    # for plausability checks
+                                    # for plausibility checks
          outputHydrographDF_<simHash>.csv      # output hydrograph
          Plots/
            outputHydrograph_<simHash>_XS <station>.png      # plotted hydrograph and cumulative volume
@@ -216,4 +216,4 @@ execute:
 This standalone script also requires ``outputHydrograph = True`` in the
 :py:mod:`c1TIF` configuration. It produces ``outputCrossSection.csv`` and
 ``outputCoordinates.csv`` but does not compute discharge hydrographs.
-This run-script's elementary purpose is for debugging reasons.
+The primary purpose of this run script is debugging.

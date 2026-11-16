@@ -10,7 +10,7 @@ import pytest
 
 from debrisframe.c1TIF import c1TIF
 from debrisframe import runC1TIF
-from debrisframe import runIn2TopoHyd
+from debrisframe import runIn2DFHyd
 from debrisframe.in1Utils import fileUtils
 
 from avaframe.in3Utils import cfgUtils
@@ -40,7 +40,7 @@ def test_runC1TIF(tmp_path):
     modCfg["com1DFA_com1DFA_override"]["explicitFriction"] = "0"
     modCfg["com1DFA_com1DFA_override"]["frictModel"] = "Voellmy"
 
-    runIn2TopoHyd.runIn2TopoHyd(str(avaDir))
+    runIn2DFHyd.runIn2DFHyd(str(avaDir))
     fileUtils.copyHydrToInput(avaDir)
 
     dem, plotDict, reportDictList, simDF = c1TIF.c1TIFMain(cfgMain, modCfg)
@@ -69,7 +69,7 @@ def test_runC1TIF_expertCfg(tmp_path):
     expertCfg = cfgDir / "c1TIFCfg.ini"
     expertCfg.write_text("[com1DFA_com1DFA_override]\nrho = 3000\n")
 
-    runIn2TopoHyd.runIn2TopoHyd(str(avaDir))
+    runIn2DFHyd.runIn2DFHyd(str(avaDir))
     fileUtils.copyHydrToInput(avaDir)
 
     runC1TIF.runC1TIF(str(avaDir))

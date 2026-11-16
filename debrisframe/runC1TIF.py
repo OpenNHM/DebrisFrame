@@ -17,7 +17,7 @@ from avaframe.in3Utils import fileHandlerUtils as fU
 # import computation modules
 import debrisframe as debf
 from debrisframe.c1TIF import c1TIF
-from debrisframe.in2TopoHyd import in2TopoHyd
+from debrisframe.in2DFHyd import in2DFHyd
 from debrisframe.in1Utils import fileUtils
 from debrisframe.outHelper import out1HelpDFHyd
 
@@ -31,7 +31,7 @@ def runC1TIF(debrisDir="", inHydr=False):
         path to debris flow directory (setup e.g. with init scripts)
     inHydr: bool
         if inHydr is True, the initial conditions for c1TIF
-        are computed from a hydrograph first by executing in2TopoHyd
+        are computed from a hydrograph first by executing in2DFHyd
 
     Returns
     -------
@@ -69,7 +69,7 @@ def runC1TIF(debrisDir="", inHydr=False):
     DebrisCfg = cfgUtils.getModuleConfig(c1TIF, debrisDir, toPrint=False)
 
     # ---------------------
-    # check if in2TopoHyd computes input data for c1TIF
+    # check if in2DFHyd computes input data for c1TIF
     # TODO: should we also override the flag, in Expert mode?
     if inHydr:
         DebrisCfg["GENERAL"]["inputHydrograph"] = "True"
@@ -83,20 +83,20 @@ def runC1TIF(debrisDir="", inHydr=False):
             log.error(message)
             raise ValueError(message)
 
-        in2TopoHydCfg = cfgUtils.getModuleConfig(
-            in2TopoHyd,
+        in2DFHydCfg = cfgUtils.getModuleConfig(
+            in2DFHyd,
             fileOverride="",
             modInfo=False,
             toPrint=False,
-            onlyDefault=DebrisCfg["in2TopoHyd_in2TopoHyd_override"].getboolean("defaultConfig"),
+            onlyDefault=DebrisCfg["in2DFHyd_in2DFHyd_override"].getboolean("defaultConfig"),
         )
-        in2TopoHydCfg, debrisCfg = cfgHandling.applyCfgOverride(
-            in2TopoHydCfg, DebrisCfg, in2TopoHyd, addModValues=False
+        in2DFHydCfg, debrisCfg = cfgHandling.applyCfgOverride(
+            in2DFHydCfg, DebrisCfg, in2DFHyd, addModValues=False
         )
 
-        in2TopoHyd.in2TopoHydMain(debrisDir, in2TopoHydCfg, DebrisCfg)
+        in2DFHyd.in2DFHydMain(debrisDir, in2DFHydCfg, DebrisCfg)
 
-        # copy in2TopoHyd output into Inputs folder for c1TIF
+        # copy in2DFHyd output into Inputs folder for c1TIF
         fileUtils.copyHydrToInput(debrisDir)
 
     if DebrisCfg["VISUALISATION"].getboolean("outputHydrograph"):
