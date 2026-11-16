@@ -56,7 +56,11 @@ def test_getCrossSectionCells_selects_nearestCellCenter():
     xllcenter = 1001.0
     yllcenter = 2001.0
     dem = {
-        "header": {"xllcenter": xllcenter, "yllcenter": yllcenter, "cellsize": cellSize},
+        "header": {
+            "xllcenter": xllcenter,
+            "yllcenter": yllcenter,
+            "cellsize": cellSize,
+        },
         "rasterData": np.zeros((10, 10)),
         "areaRaster": np.full((10, 10), cellSize * cellSize),
     }
@@ -80,7 +84,11 @@ def test_getCrossSectionCells_snapsSlantedLineToCellCenters():
     xllcenter = 1001.0
     yllcenter = 2001.0
     dem = {
-        "header": {"xllcenter": xllcenter, "yllcenter": yllcenter, "cellsize": cellSize},
+        "header": {
+            "xllcenter": xllcenter,
+            "yllcenter": yllcenter,
+            "cellsize": cellSize,
+        },
         "rasterData": np.zeros((10, 10)),
         "areaRaster": np.full((10, 10), cellSize * cellSize),
     }
@@ -167,9 +175,7 @@ def test_assignToWetCell_conservesReleaseVolume():
     releaseThickness = np.array([1.5])
     releaseVolume = np.array([6.0])
 
-    wetCells = in2DFHyd.assignToWetCell(
-        crossSection, dem, ratingCurve, releaseThickness, releaseVolume
-    )
+    wetCells = in2DFHyd.assignToWetCell(crossSection, dem, ratingCurve, releaseThickness, releaseVolume)
 
     # surface at 4.5 wets the three cells with elevation below 4.5
     assert len(wetCells["wetXcoords"][0]) == 3

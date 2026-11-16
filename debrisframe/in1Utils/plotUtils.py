@@ -35,7 +35,12 @@ def plotCrossSection(crossSection, outputDir, outputName):
     fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
 
     ax.plot(crossSection["s"], crossSection["elevation"])
-    ax.scatter(crossSection["sLevee"], crossSection["elevLevee"], color="red", label="Levee points")
+    ax.scatter(
+        crossSection["sLevee"],
+        crossSection["elevLevee"],
+        color="red",
+        label="Levee points",
+    )
     ax.set_xlabel("distance [m]")
     ax.set_ylabel("elevation [m]")
     ax.grid(color="gray", linestyle="--", linewidth=0.5, alpha=0.6)
@@ -88,7 +93,12 @@ def plotRatingCurve(ratingCurve, crossSection, outputDir, outputName):
     fig, ax = plt.subplots(ncols=1, nrows=2, figsize=(pU.figW, pU.figH))
 
     ax[0].plot(crossSection["s"], crossSection["elevation"])
-    ax[0].scatter(crossSection["sLevee"], crossSection["elevLevee"], color="red", label="Levee points")
+    ax[0].scatter(
+        crossSection["sLevee"],
+        crossSection["elevLevee"],
+        color="red",
+        label="Levee points",
+    )
     for i, (elev, minimum, maximum) in enumerate(zip(surfElev, xmin, xmax)):
         elev = [elev] * len(minimum)
         ax[0].hlines(

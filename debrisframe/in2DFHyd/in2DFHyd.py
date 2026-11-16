@@ -239,7 +239,6 @@ def computeRatingCurve(crossSection, inputHydCfg):
         subXmax = []
         # iteration loop over subarrays
         for sub in idxSub:
-
             # np.trapz() only calculates the area between the vertices (cell centers)
             # if the thickness at the very left and the very right cell is still > 0,
             # there are remaining subareas on both sides that have to be considered
@@ -353,8 +352,14 @@ def computeParallelCrossSection(dem, crossSection, inputHydCfg):
     xcoordEnd2 = xcoordEnd + normalDist * nx2
     ycoordEnd2 = ycoordEnd + normalDist * ny2
     # save results in a dictionary
-    coord1 = {"x": np.array([xcoordStart1, xcoordEnd1]), "y": np.array([ycoordStart1, ycoordEnd1])}
-    coord2 = {"x": np.array([xcoordStart2, xcoordEnd2]), "y": np.array([ycoordStart2, ycoordEnd2])}
+    coord1 = {
+        "x": np.array([xcoordStart1, xcoordEnd1]),
+        "y": np.array([ycoordStart1, ycoordEnd1]),
+    }
+    coord2 = {
+        "x": np.array([xcoordStart2, xcoordEnd2]),
+        "y": np.array([ycoordStart2, ycoordEnd2]),
+    }
     # get elevation for new cross sections
     crossSect1 = getCrossSectionCells(dem, coord1)
     crossSect2 = getCrossSectionCells(dem, coord2)
@@ -766,7 +771,7 @@ def getInputShapeFiles(inputDir, folder, fileType, dem, idField=None):
         raise ValueError(message)
 
     lenFeature = np.array(shapeFile["Length"])
-    if fileType.lower() not in ["release line", "levee points"] and not all(lenFeature  == 2):
+    if fileType.lower() not in ["release line", "levee points"] and not all(lenFeature == 2):
         message = f"{fileType} consists of more/less than 2 points! Only starting and ending point allowed!"
         log.error(message)
         raise ValueError(message)
@@ -931,10 +936,18 @@ def in2DFHydMain(debrisDir, inputHydCfg, debrisCfg):
     # get release line and levee points
     inputDir = pathlib.Path(debrisDir, "Inputs")
     releaseLine = getInputShapeFiles(
-        inputDir=inputDir, folder="XSECT", fileType="Release line", dem=dem, idField=None
+        inputDir=inputDir,
+        folder="XSECT",
+        fileType="Release line",
+        dem=dem,
+        idField=None,
     )
     leveePoints = getInputShapeFiles(
-        inputDir=inputDir, folder="LEVEE", fileType="Levee points", dem=dem, idField=None
+        inputDir=inputDir,
+        folder="LEVEE",
+        fileType="Levee points",
+        dem=dem,
+        idField=None,
     )
     # output files are named after the release-line shapefile in Inputs/XSECT
     outputName = releaseLine["fname"].stem
@@ -953,7 +966,11 @@ def in2DFHydMain(debrisDir, inputHydCfg, debrisCfg):
     # export cross section cell centers as points for plausibility check
     if inputHydCfg["EXPORTS"].getboolean("exportCrossSectionCells"):
         file = pd.DataFrame(
-            {"x": crossSection["x"], "y": crossSection["y"], "elev": crossSection["elevation"]}
+            {
+                "x": crossSection["x"],
+                "y": crossSection["y"],
+                "elev": crossSection["elevation"],
+            }
         )
         path = outputDir / f"{outputName}_crossSectionCells.csv"
         file.to_csv(path, sep=",", decimal=".", header=True, index=False)
@@ -968,7 +985,10 @@ def in2DFHydMain(debrisDir, inputHydCfg, debrisCfg):
 
     # plot cross section and rating curve for plausibility check
     pltUtls.plotRatingCurve(
-        ratingCurve=ratingCurve, crossSection=crossSection, outputDir=outputDir, outputName=outputName
+        ratingCurve=ratingCurve,
+        crossSection=crossSection,
+        outputDir=outputDir,
+        outputName=outputName,
     )
 
     # get hydrograph data
@@ -976,7 +996,11 @@ def in2DFHydMain(debrisDir, inputHydCfg, debrisCfg):
 
     # get release flow thicknesses and velocities
     relTh, vel = computeRelFlowThVel(
-        hydrograph["discharge"], inputHydCfg, ratingCurve=ratingCurve, dem=dem, crossSection=crossSection
+        hydrograph["discharge"],
+        inputHydCfg,
+        ratingCurve=ratingCurve,
+        dem=dem,
+        crossSection=crossSection,
     )
 
     # distribute flow thickness and release volume over wetted cells

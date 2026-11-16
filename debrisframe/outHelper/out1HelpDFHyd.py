@@ -101,7 +101,11 @@ def out1HelpDFHydMain(debrisDir, debrisCfg):
     inputDir = pathlib.Path(debrisDir, "Inputs")
     dem = inDFHyd.getDEMRaster(debrisDir, debrisCfg)
     outLine = inDFHyd.getInputShapeFiles(
-        inputDir=inputDir, folder="OUTHYDR", fileType="Output hydrograph", dem=dem, idField="Station"
+        inputDir=inputDir,
+        folder="OUTHYDR",
+        fileType="Output hydrograph",
+        dem=dem,
+        idField="Station",
     )
 
     # get cross section cells for every hydrograph output line
@@ -188,4 +192,10 @@ def out1HelpDFHydMain(debrisDir, debrisCfg):
     outputDir = pathlib.Path(debrisDir, "Outputs", "out1HelpDFHyd")
     fU.makeADir(outputDir)
     # write csv-file
-    outputCoords.to_csv(outputDir / "outputCoordinates.csv", sep=",", decimal=".", header=True, index=False)
+    outputCoords.to_csv(
+        outputDir / "outputCoordinates.csv",
+        sep=",",
+        decimal=".",
+        header=True,
+        index=False,
+    )
