@@ -82,21 +82,21 @@ Helper functions
    out1HelpDFHyd.rst
 
 
-Workflow
+Workflows
 =====================
 
 .. only:: html
 
-    * :doc:`workflowIn2DFHyd`
     * :doc:`workflowC1TIF`
+    * :doc:`workflowIn2DFHyd`
 
 .. toctree::
    :maxdepth: 3
    :hidden:
-   :caption: Workflow
+   :caption: Workflows
 
-   workflowIn2DFHyd.rst
    workflowC1TIF.rst
+   workflowIn2DFHyd.rst
 
 Indices and tables
 ==================

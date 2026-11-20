@@ -33,3 +33,7 @@ Glossary
 
     hydrograph
         A hydrograph is the time series describing how the :term:`discharge` of water varies at a given cross-section.
+
+    levee points
+        Considering a channel :term:`cross section`, levee points define the left and right top of the channel embankment
+        which constrain the flow to the main channel.

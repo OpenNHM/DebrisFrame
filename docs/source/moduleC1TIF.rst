@@ -1,4 +1,4 @@
-c1TIF: thickness integrated flow module
+c1TIF: Thickness integrated flow module
 =======================================
 
 :py:mod:`c1TIF` is a module for debris flow computations using thickness integration.
@@ -22,11 +22,16 @@ to perform simulations for varying parameters all at once.
 .. Note::
    The configuration parameters are still under development.
 
+Theory
+--------
+The theory and numerics of the thickness integrated flow model can be found in the
+`AvaFrame documentation: com1DFA Theory <https://docs.avaframe.org/en/latest/theoryCom1DFA.html>`_.
+
 Input
 ---------
 
-c1TIF simulations are performed within a process directory, organized with the
-folder structure described in the `AvaFrame documentation <https://docs.avaframe.org/en/latest/moduleCom1DFA.html#input>`_.
+The data required to execute the module are described in
+:doc:`workflowC1TIF`.
 Regarding the release- and entrainment thickness settings we refer to the
 `respective AvaFrame section <https://docs.avaframe.org/en/latest/moduleCom1DFA.html#release-entrainment-thickness-settings>`_.
 Note that option 3 (thickness set via time dependent release file) is the default setting in c1TIF.
@@ -48,53 +53,22 @@ or stopping (flow velocity is zero) occurs and the respective flags `adaptSfcEnt
 (see the `AvaFrame adaptive topography documentation <https://docs.avaframe.org/en/latest/theoryCom1DFA.html#adaptive-surface>`_).
 Additionally, the deposition can be erodible if `entrainableDeposition` is switched on.
 
-
-Model configuration
---------------------
-The model configuration is read from a configuration file: ``c1TIF/c1TIFCfg.ini``. In this file,
-all model parameters are listed and can be modified. These parameters overwrite the respective parameters
-of AvaFrame's ``com1DFACfg.ini`` and DebrisFrame's ``in2DFHydCfg.ini`` configuration file. We recommend to create a local copy
-and keep the default configuration in ``c1TIF/c1TIFCfg.ini`` untouched.
-For this purpose, in ``DebrisFrame/debrisframe/`` run:
-
-  ::
-
-    cp c1TIF/c1TIFCfg.ini c1TIF/local_c1TIFCfg.ini
-
-and modify the parameter values in there.
-
-It is also possible to perform multiple simulations at once, with varying input parameters.
-
-
 Output
 ---------
-The simulation results are saved to: *Outputs/com1DFA*.
-The description of the default and optional results are in the `AvaFrame documentation <https://docs.avaframe.org/en/latest/moduleCom1DFA.html#output>`_.
 
+The description of the default and optional results are in the
+`AvaFrame documentation <https://docs.avaframe.org/en/latest/moduleCom1DFA.html#output>`_.
 
 To run
 --------
 
-* first go to ``DebrisFrame/debrisframe``
-* copy ``debrisframeCfg.ini`` to ``local_debrisframeCfg.ini`` and set your desired process directory name
-* create a process directory with required input files
-* copy ``c1TIF/c1TIFCfg.ini`` to ``c1TIF/local_c1TIFCfg.ini`` and if desired change configuration settings
+For the complete execution sequence and differences between the two routes,
+see :doc:`workflowC1TIF`:
 
-* run:
-  ::
+* **Script-based:** run ``runC1TIF.py`` with the process-directory inputs.
+  Setting ``inputHydrograph = True`` enables automatic ``in2DFHyd`` preprocessing.
+* **QGIS:** select inputs in the ``Thickness integrated flow (c1)`` tool. For
+  hydrograph-derived conditions, run the ``Hydrograph Starting Condition (in2DFHyd)`` QGIS tool first and pass
+  its CSV to c1TIF while keeping ``inputHydrograph = False``.
 
-    pixi run python runC1TIF.py
-
-Run from hydrograph
---------
-
-If in ``local_c1TIFCfg.ini`` ``inputHydrograph`` is set to ``True``, the :py:mod:`c1TIF` input data is computed from
-a hydrograph by executing the :ref:`moduleIn2DFHyd:in2DFHyd: Initial Hydraulic Conditions Module` module.
-From in2DFHyd :ref:`moduleIn2DFHyd:Output`, the resulting time dependent release (csv) file is copied into the
-``Inputs/REL`` directory for the :py:mod:`c1TIF` simulation.
-
-
-Theory
---------
-The theory and numerics of the thickness integrated flow model can be found in the
-`AvaFrame documentation: com1DFA Theory <https://docs.avaframe.org/en/latest/theoryCom1DFA.html>`_.
+See also :doc:`scriptBasedUsage` and :doc:`qgisConnector`.

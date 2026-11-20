@@ -31,7 +31,7 @@ For each cross-section cell, the module stores its x and y coordinates and its t
 2. Levee points
 ^^^^^^^^^^^^^^^^
 
-Two so-called levee points define the left and right top of the channel embankment which constrain the flow to the main channel.
+Two so-called :term:`levee points` define the left and right top of the channel embankment which constrain the flow to the main channel.
 Only this part of the cross section  is considered for the calculation of the flow area.
 
 3. Rating curve
@@ -54,13 +54,15 @@ It is subsequently used to convert the flow area required for a given discharge 
   The current implementation provides the approach after :cite:`Rickenmann1999` as the only available method for calculating the mean flow velocity.
 
 For each discharge value, the mean flow velocity is calculated.
-The currently implemented approach :cite:`Rickenmann1999` calculates the velocity [m/s] as:
+The currently implemented approach after :cite:`Rickenmann1999` calculates the debris-flow velocity [m/s] as:
 
 .. math::
-  v = 2.1 \cdot Q^{0.33} \cdot S^{0.33}
+  v = 2.1 \cdot Q^{\frac{1}{3}} \cdot S^{\frac{1}{3}}
   :label: velRickenmann
 
-where :math:`Q` is the discharge [m³/s] and :math:`S` is the mean channel slope [m/m] in flow direction.
+where :math:`Q` is the discharge [m³/s] and :math:`S` is the mean channel slope [m/m] in flow direction. According to :cite:`Rickenmann1999`,
+this formula was evaluated for alpine debris flows with channel slopes ranging from 7 % to 53 % and peak discharges between 17 m³/s and 640 m³/s.
+
 The slope can either be supplied through the configuration file ``in2DFHydCfg.ini`` via ``slope`` or calculated automatically.
 For the automatic calculation, two additional cross sections are generated, one on each side of the release line, at a predefined normal distance.
 The mean elevations between the levee points of these virtual cross sections are used to estimate the slope using a central difference:
@@ -75,7 +77,7 @@ where `d` is the normal distance between the release line and the virtual cross 
   d = 2 \cdot \sqrt{csz^2 + csz^2}
   :label: normal distance
 
-where `csz` is the raster cell size. The normal distance ``normalDist`` can be set directly in ``in2DFHydCfg.ini``.
+where `csz` is the raster cell size. Instead, the normal distance ``normalDist`` can be set directly in ``in2DFHydCfg.ini``.
 
 5. Flow area and flow thickness
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -112,16 +114,16 @@ The release volume per time step :math:`V(t)` is distributed among the wet cells
   V(t) = \frac{Q(t) + Q(t + \Delta t)}{2} \cdot \Delta t.
   :label: volume per time step
 
-The coefficient :math:`coeff` is defined as the ratio of the flow area of a cell :math:`A_{cell}` and the total flow area of the cross section :math:`A_{tot}`:
+The coefficient :math:`c` is defined as the ratio of the flow area of a cell :math:`A_{cell}` and the total flow area of the cross section :math:`A_{tot}`:
 
 .. math::
-  coeff_{cell} = \frac{A_{cell}}{A_{tot}}.
+  c_{cell} = \frac{A_{cell}}{A_{tot}}.
   :label: distribution coefficient
 
-Subsequently, :math:`V(t)` is multiplied by :math:`coeff_{cell}` which results in the release volume per cell and time step:
+Subsequently, :math:`V(t)` is multiplied by :math:`c_{cell}` which results in the release volume per cell and time step:
 
 .. math::
-  V(t)_{cell} = V(t) \cdot coeff_{cell}.
+  V(t)_{cell} = V(t) \cdot c_{cell}.
   :label: cell volume
 
 To ensure mass consistency, for each wet cell, the local flow thickness :math:`FT_{cell}` is calculated as the release volume per time step :math:`V(t)`
@@ -163,12 +165,8 @@ The :py:mod:`in2DFHyd` module requires a
 
 * **and levee points**.
 
-:py:mod:`in2DFHyd` calculations are performed within a process directory, organized with the
-folder structure described below.
-
-.. Note::
-
-  ::
+For **script-based usage**, the inputs are organized in a process directory
+as shown below::
 
     NameOfDebrisFlow/
       Inputs/
@@ -185,31 +183,45 @@ folder structure described below.
           <crossSectionName>_ratingCurve.png
       Work/
 
+The folder structure described above is only required for script-based usage.
+For **QGIS**, load or create the DEM, hydrograph, cross-section line and levee
+points in the QGIS project and select them in the in2DFHyd processing tool;
+these inputs need not be placed in the fixed ``Inputs`` subdirectories.
+QGIS still requires a destination folder for the results. For both routes,
+see :doc:`workflowIn2DFHyd`.
 
 Digital elevation model
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-The module uses the provided DEM in ``Inputs`` to obtain the terrain elevation along the release line.
+The module uses the supplied DEM to obtain the terrain elevation along the release line.
+For script-based usage, the DEM is discovered in ``Inputs``; for QGIS, select
+the raster layer in the processing tool.
 The DEM cell size and raster origin are also used to map the release line to raster cells.
 
 
 Release line
 ^^^^^^^^^^^^
 
-The release line is read from the ``Inputs/XSECT`` directory. It must contain **exactly two points**, representing the starting and ending point of the release line.
-The module searches the ``XSECT`` directory for a release shapefile. If no unique release file can be identified, the module stops with an error.
+The release line must contain **exactly two vertices**, representing its
+start and end. In script-based usage, the module searches ``Inputs/XSECT`` for
+the line shapefile; in QGIS, select the prepared line layer directly.
 The release line defines the terrain cross section used for the hydraulic calculations.
 
 Levee points
 ^^^^^^^^^^^^
 
-The module requires exactly one point shapefile in ``Inputs/LEVEE`` whose filename ends with ``*levee.shp``.
+The module requires a point layer containing exactly two levee points. For
+script-based usage, provide the shapefile in ``Inputs/LEVEE`` (with a filename
+ending in ``*levee.shp`` as required by the module's file search). For QGIS,
+select the two-point layer directly.
 The levee points define the lateral limits of the debris-flow channel. Each levee point is assigned to the nearest DEM cell of the release cross section.
 
 Debris-flow hydrograph
 ^^^^^^^^^^^^^^^^^^^^
 
-The time-dependent discharge is read from the hydrograph file (.csv) in ``Inputs/HYDR``.
+The time-dependent discharge is read from a hydrograph CSV file. Place it
+in ``Inputs/HYDR`` for script-based usage; select the CSV in the QGIS tool for
+the QGIS routine.
 
 The file must contain the columns:
 
@@ -221,7 +233,11 @@ The discharge values are used to derive the hydraulic conditions for every times
 Model configuration
 --------------------
 
-The model configuration is read from ``in2DFHydCfg.ini``. A local copy can be created and modified for individual process directories.
+For a separate script-based run, the model configuration is read from
+``in2DFHydCfg.ini`` (or its local override). When c1TIF triggers hydraulic
+preprocessing, its ``[in2DFHyd_in2DFHyd_override]`` configuration section
+supplies relevant overrides. In QGIS, an expert configuration file can be
+selected in the tool. See :doc:`workflowIn2DFHyd` for the execution routines.
 
 The available parameters are:
 
@@ -296,7 +312,7 @@ These plots are intended to help verify the geometric and hydraulic calculations
 To run
 -------
 
-* first go to ``DebrisFrame/debrisframe``
+* for script-based usage, first go to ``DebrisFrame/debrisframe``
 
 * copy ``debrisframeCfg.ini`` to ``local_debrisframeCfg.ini`` and set your desired process directory name
 
@@ -310,7 +326,14 @@ To run
     pixi run python runIn2DFHyd.py
 
 
-The complete workflow reads the DEM and release information, generates the release cross section, calculates the rating curve,
-derives the hydraulic conditions from the discharge hydrograph and writes the resulting initial conditions to ``Outputs/in2DFHyd/<crossSectionName>.csv``.
+The complete preprocessing workflow reads the DEM and release information,
+generates the release cross section, calculates the rating curve, derives the
+hydraulic conditions from the discharge hydrograph and writes the initial
+conditions to ``Outputs/in2DFHyd/<crossSectionName>.csv``.
 
-To run the module from :mod:`c1TIF`, follow the instructions in :ref:`moduleC1TIF:Run from hydrograph`
+**For QGIS**, use the **Hydrograph Starting Condition (in2DFHyd)** processing
+tool instead of the Python command. To continue with c1TIF, select the
+generated CSV in the **Thickness integrated flow (c1)** tool. See
+:doc:`qgisConnector` and :doc:`workflowIn2DFHyd`.
+
+To run the module from :mod:`c1TIF`, follow the instructions in :doc:`workflowC1TIF`

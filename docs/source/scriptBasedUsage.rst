@@ -1,18 +1,45 @@
 Script-based usage
-------------------------
+------------------
 
-After the `installation of DebrisFrame <https://docs.debrisframe.org/en/latest/installation.html#>`_
-make sure you change to your ``DebrisFrame`` directory by::
+Use this route to run DebrisFrame from Python scripts. Unlike the QGIS route,
+**script-based execution requires input files in the process-directory folder
+structure** described in :doc:`workflowIn2DFHyd` (for hydrograph preprocessing)
+and `AvaFrame documentation <https://docs.avaframe.org/en/latest/moduleCom1DFA.html#input>`_ (for simulation inputs).
 
-  cd [YOURDIR]/DebrisFrame/debrisframe/data/[DEBRIS]
+After :doc:`installation`, open a terminal and change to the ``debrisframe``
+package directory inside your DebrisFrame checkout::
 
-Replace ``[YOURDIR]`` and ``[DEBRIS]`` with the directory from your installation step and your
-debris-flow directory, respectively.
+   cd [YOURDIR]/DebrisFrame/debrisframe
 
-Make sure you have all the input data you need to run the modules you want to execute (:doc:`moduleC1TIF`, :doc:`moduleIn2DFHyd`).
+Replace ``[YOURDIR]`` with your installation path. Configure the desired
+process directory in ``debrisframeCfg.ini`` (or pass its path as a script
+argument). The process directory is **not** the directory from which the
+Python script must be started.
 
-If desired, you can modify the configuration settings as described in :ref:`moduleC1TIF:Model configuration`.
+Choose one of the following workflows:
 
-Then run ::
+* **Run in2DFHyd separately:** Prepare the DEM, hydrograph, cross section and
+  levee points, then execute::
 
-  [YOURDIR]/DebrisFrame/debrisframe/ pixi run python runC1TIF.py
+     pixi run python runIn2DFHyd.py
+
+  This creates a CSV with hydraulic initial conditions. If you run c1TIF
+  separately afterwards, provide this CSV in ``Inputs/REL`` and use a
+  time-dependent release without triggering preprocessing a second time.
+
+* **Run c1TIF with automatic hydraulic preprocessing:** Set
+  ``inputHydrograph = True`` and ``timeDependentRelease = True`` in the
+  relevant c1TIF configuration, then execute::
+
+     pixi run python runC1TIF.py
+
+  c1TIF runs in2DFHyd first and transfers its initial-condition CSV into
+  ``Inputs/REL`` before starting the simulation.
+
+* **Run c1TIF without hydraulic preprocessing:** Provide the appropriate
+  release input (a release area or an existing time-dependent release CSV),
+  set ``inputHydrograph = False`` and execute ``runC1TIF.py``.
+
+For file requirements and configuration options, see :doc:`workflowIn2DFHyd`
+and :doc:`workflowC1TIF`. For the alternative route through the QGIS
+Processing Toolbox, see :doc:`qgisConnector`.
