@@ -149,9 +149,7 @@ To select suitable point locations, use the QGIS terrain-profile plugin
 
     Determination of the position of the levee points using ``Profile tool``
 
-Leave sufficient distance between the levee points and the starting and
-ending points of the cross section line. The module reports an error if this
-requirement is not met. Otherwise, the levee points are assigned to the closest cross-section points.
+The levee points are assigned to the closest cross-section points.
 
 The module also checks whether the channel can accommodate the specified
 discharge at each timestep. In the documented implementation, it stops with
@@ -263,7 +261,7 @@ If the preprocessing or subsequent simulation fails, check the following:
 * Does the cross section line contain exactly two vertices and run across the
   channel, perpendicular to the expected flow direction?
 * Does the levee-point shapefile contain exactly two points? Are they
-  correctly positioned and sufficiently far from the release-line endpoints?
+  correctly positioned?
 * Do the hydrograph columns, units and timestep interval match the required
   format?
 * Are the output plots plausible? They may help explain errors that are

@@ -12,9 +12,10 @@ import pytest
 from debrisframe.in2DFHyd import in2DFHyd
 
 
-def _inputHydCfg(dElev="0.5"):
+def _inputHydCfg(dElev="0.5", normalDist="2.0"):
     cfg = configparser.ConfigParser()
     cfg["GENERAL"] = {"dElev": dElev}
+    cfg["GENERAL"] = {"normalDist": normalDist}
     return cfg
 
 
@@ -101,6 +102,32 @@ def test_getCrossSectionCells_snapsSlantedLineToCellCenters():
     assert np.all(crossSection["crossSectIdx"][0] == np.round(resid).astype(np.int32))
 
 
+def test_computeRatingCurve():
+    """Check that the function computes the correct rating curve"""
+
+    crossSection = {
+        "elevation": np.array([5.0, 5.0, 0.0, 0.0, 0.0, 5.0, 5.0]),
+        "s": np.arange(0.0, 7.0, 1.0),
+        "idLevee": [1, 5],
+        "elevLevee": np.array([5.0, 5.0]),
+    }
+
+    ratingCurve = in2DFHyd.computeRatingCurve(crossSection, _inputHydCfg())
+
+    dh = 0.5
+    thicknessTest = np.arange(0.5, 5 + dh, dh)
+    dHdx = 5.0 / 1.0
+    flowAreaTest = thicknessTest * 2.0 + (thicknessTest / dHdx * thicknessTest)
+    surfElevTest = thicknessTest + 0.0
+
+    assert np.all(ratingCurve["thickness"] == thicknessTest)
+    assert np.all(ratingCurve["flowArea"] == flowAreaTest)
+    assert ratingCurve["minElevation"] == 0.0
+    assert np.all(ratingCurve["surfElev"] == surfElevTest)
+    assert np.all(np.array(ratingCurve["xmin"]) == np.array([[float(2.0 - t / dHdx)] for t in thicknessTest]))
+    assert np.all(np.array(ratingCurve["xmax"]) == np.array([[float(4.0 + t / dHdx)] for t in thicknessTest]))
+
+
 def test_computeRatingCurve_flatChannelRaises():
     """Check that a channel without a levee-to-bottom elevation difference raises explicitly.
 
@@ -116,7 +143,7 @@ def test_computeRatingCurve_flatChannelRaises():
 
     with pytest.raises(ValueError, match="channel"):
         in2DFHyd.computeRatingCurve(crossSection, _inputHydCfg())
-
+    
 
 def test_computeRatingCurve_returnsNonEmptyForValidChannel():
     """Check that a proper V-shaped channel still yields a non-empty rating curve."""
@@ -197,6 +224,8 @@ def test_computeRelFlowThVel_unsupportedVelTypeRaises():
 
 def test_assignCrossSectionCoords_picksNearestCell():
     """Check each levee point is mapped to the nearest cross-section cell."""
+
+    # levee points lie within the range of the cross section
     crossSection = {
         "x": np.array([0.0, 2.0, 4.0, 6.0, 8.0]),
         "y": np.zeros(5),
@@ -208,7 +237,23 @@ def test_assignCrossSectionCoords_picksNearestCell():
     result = in2DFHyd.assignCrossSectionCoords(leveePoints, crossSection)
 
     assert result["idLevee"] == [1, 3]
+    assert np.all(result["sLevee"] == np.array([2.0, 6.0]))
     assert np.all(result["elevLevee"] == np.array([4.0, 4.0]))
+
+    # levee points lie beyond the range of the cross section
+    leveePoints = {"x": np.array([-1.0, 10.0]), "y": np.array([2.4, 7.8])}
+
+    result = in2DFHyd.assignCrossSectionCoords(leveePoints, crossSection)
+
+    assert result["idLevee"] == [1, 3]
+    assert np.all(result["sLevee"] == np.array([2.0, 6.0]))
+    assert np.all(result["elevLevee"] == np.array([4.0, 4.0]))
+
+    # levee points share the same location
+    leveePoints = {"x": np.array([5.0, 5.0]), "y": np.array([0.0, 0.0])}
+
+    with pytest.raises(ValueError, match=r"The two levee points.*"):
+        in2DFHyd.assignCrossSectionCoords(leveePoints, crossSection)
 
 
 def test_getHydrograph_computesReleaseVolume(tmp_path):
@@ -225,3 +270,56 @@ def test_getHydrograph_computesReleaseVolume(tmp_path):
         hydrograph = in2DFHyd.getHydrograph(inputDir)
 
     assert np.allclose(hydrograph["relVol"], [1.0, 3.0])
+
+
+def test_assignRasterCoords():
+    """Check nearest raster coordinates are assigned to the
+    starting and ending point of the release line"""
+
+    cellSize = 2.0
+    xllcenter = 0.0
+    yllcenter = 0.0
+    releaseLine = {"x": np.array([1.0, 8.0]), "y": np.array([5.0, 5.0])}
+
+    result = in2DFHyd.assignRasterCoords(cellSize, xllcenter, yllcenter, releaseLine)
+
+    assert np.all(result["xRaster"] == np.array([0.0, 8.0]))
+    assert np.all(result["yRaster"] == np.array([4.0, 4.0]))
+
+def test_computeSubArea():
+    """Check computation of subarea at the boundaries of a wetted cross section"""
+
+    elevation = np.array([4.0, 3.0, 2.0, 1.0, 0.0, 1.0, 2.0, 3.0, 4.0])
+    csz = 1.0
+    distance = np.arange(0.0, len(elevation) * 2, csz)
+    surfElev = 2.5
+    idLevee = np.array([0, 8])
+    wetCellIdx = np.array([2, 6])
+
+    # starting point
+    idx = 0
+    subArea, dx = in2DFHyd.computeSubArea(elevation, distance, surfElev, idLevee, wetCellIdx, idx)
+
+    dElev = surfElev - 2.0
+    subAreaTest = 0.5 * 0.5 * csz * dElev # half area of a rectangle
+
+    assert subArea == subAreaTest
+    assert dx == csz / 2
+
+    # ending point
+    surfElev = 1.75
+    idx = -1
+    wetCellIdx = np.array([3, 5])
+    subArea, dx = in2DFHyd.computeSubArea(elevation, distance, surfElev, idLevee, wetCellIdx, idx)
+
+    dElev = surfElev - 1.0
+    subAreaTest = 0.5 * 0.75 * csz * dElev # half area of a rectangle
+
+    assert subArea == subAreaTest
+    assert dx == csz * 0.75
+
+    # idx has an invalid value
+    idx = 2
+
+    with pytest.raises(ValueError, match="idx must be 0 or -1"):
+            in2DFHyd.computeSubArea(elevation, distance, surfElev, idLevee, wetCellIdx, idx)

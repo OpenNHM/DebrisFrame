@@ -53,16 +53,24 @@ def assignCrossSectionCoords(leveePoints, crossSection):
         dist = np.sqrt(diffX * diffX + diffY * diffY)
         idPoint.append(np.argmin(dist))
 
+    if len(set(idPoint)) == 1:
+        message = """The two levee points share the same cross-section cell!
+        Ensure that the levee points are assigned to different locations."""
+        log.error(message)
+        raise ValueError(message)
+    
+    sLevee = crossSection["s"][idPoint]
+    # levee points are must not match the starting nor
+    # the ending point of the cross section
+    if np.min(sLevee) == 0.0:
+        idPoint[0] = idPoint[0] + 1
+    if np.max(sLevee) == crossSection["s"][-1]:
+        idPoint[-1] = idPoint[-1] - 1
+
+    sLevee = crossSection["s"][idPoint]
     xLevee = crossSection["x"][idPoint]
     yLevee = crossSection["y"][idPoint]
     elevLevee = crossSection["elevation"][idPoint]
-    sLevee = crossSection["s"][idPoint]
-
-    if np.min(sLevee) == 0.0 or np.max(sLevee) == crossSection["s"][-1]:
-        message = """At least one levee point lies on the starting or ending point of your release line!
-            Ensure that you keep a distance of at least one raster cell interior to the edges"""
-        log.error(message)
-        raise IndexError(message)
 
     crossSection["idLevee"] = idPoint
     crossSection["xLevee"] = xLevee
@@ -79,7 +87,7 @@ def assignRasterCoords(cellSize, xllcenter, yllcenter, releaseLine):
 
     Parameters
     -----------
-    cellSize: int
+    cellSize: float
         dem cell size
     xllcenter: float
         x-coordinate of the dem origin (cell center)
