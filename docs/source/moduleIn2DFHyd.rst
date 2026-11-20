@@ -31,7 +31,7 @@ For each cross-section cell, the module stores its x and y coordinates and its t
 2. Levee points
 ^^^^^^^^^^^^^^^^
 
-Two so-called levee points define the left and right top of the channel embankment which constrain the flow to the main channel.
+Two so-called :term:`levee points` define the left and right top of the channel embankment which constrain the flow to the main channel.
 Only this part of the cross section  is considered for the calculation of the flow area.
 
 3. Rating curve
@@ -54,13 +54,15 @@ It is subsequently used to convert the flow area required for a given discharge 
   The current implementation provides the approach after :cite:`Rickenmann1999` as the only available method for calculating the mean flow velocity.
 
 For each discharge value, the mean flow velocity is calculated.
-The currently implemented approach :cite:`Rickenmann1999` calculates the velocity [m/s] as:
+The currently implemented approach after :cite:`Rickenmann1999` calculates the debris-flow velocity [m/s] as:
 
 .. math::
-  v = 2.1 \cdot Q^{0.33} \cdot S^{0.33}
+  v = 2.1 \cdot Q^{\frac{1}{3}} \cdot S^{\frac{1}{3}}
   :label: velRickenmann
 
-where :math:`Q` is the discharge [m³/s] and :math:`S` is the mean channel slope [m/m] in flow direction.
+where :math:`Q` is the discharge [m³/s] and :math:`S` is the mean channel slope [m/m] in flow direction. According to :cite:Rickenmann1999,
+this formula was evaluated for alpine debris flows with channel slopes ranging from 7 % to 53 % and peak discharges between 17 m³/s and 640 m³/s.
+
 The slope can either be supplied through the configuration file ``in2DFHydCfg.ini`` via ``slope`` or calculated automatically.
 For the automatic calculation, two additional cross sections are generated, one on each side of the release line, at a predefined normal distance.
 The mean elevations between the levee points of these virtual cross sections are used to estimate the slope using a central difference:
@@ -75,7 +77,7 @@ where `d` is the normal distance between the release line and the virtual cross 
   d = 2 \cdot \sqrt{csz^2 + csz^2}
   :label: normal distance
 
-where `csz` is the raster cell size. The normal distance ``normalDist`` can be set directly in ``in2DFHydCfg.ini``.
+where `csz` is the raster cell size. Instead, the normal distance ``normalDist`` can be set directly in ``in2DFHydCfg.ini``.
 
 5. Flow area and flow thickness
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -112,16 +114,16 @@ The release volume per time step :math:`V(t)` is distributed among the wet cells
   V(t) = \frac{Q(t) + Q(t + \Delta t)}{2} \cdot \Delta t.
   :label: volume per time step
 
-The coefficient :math:`coeff` is defined as the ratio of the flow area of a cell :math:`A_{cell}` and the total flow area of the cross section :math:`A_{tot}`:
+The coefficient :math:`c` is defined as the ratio of the flow area of a cell :math:`A_{cell}` and the total flow area of the cross section :math:`A_{tot}`:
 
 .. math::
-  coeff_{cell} = \frac{A_{cell}}{A_{tot}}.
+  c_{cell} = \frac{A_{cell}}{A_{tot}}.
   :label: distribution coefficient
 
-Subsequently, :math:`V(t)` is multiplied by :math:`coeff_{cell}` which results in the release volume per cell and time step:
+Subsequently, :math:`V(t)` is multiplied by :math:`c_{cell}` which results in the release volume per cell and time step:
 
 .. math::
-  V(t)_{cell} = V(t) \cdot coeff_{cell}.
+  V(t)_{cell} = V(t) \cdot c_{cell}.
   :label: cell volume
 
 To ensure mass consistency, for each wet cell, the local flow thickness :math:`FT_{cell}` is calculated as the release volume per time step :math:`V(t)`

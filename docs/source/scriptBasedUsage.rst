@@ -11,7 +11,7 @@ debris-flow directory, respectively.
 
 Make sure you have all the input data you need to run the modules you want to execute (:doc:`moduleC1TIF`, :doc:`moduleIn2DFHyd`).
 
-If desired, you can modify the configuration settings as described in :ref:`moduleC1TIF:Model configuration`.
+If desired, you can modify the configuration settings as described in :ref:`workflowC1TIF:2. Model configuration`.
 
 Then run ::
 

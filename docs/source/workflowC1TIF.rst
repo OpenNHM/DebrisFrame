@@ -1,36 +1,61 @@
 Workflow: Thickness integrated flow (c1TIF)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Runs a thickness integrated debris flow simulation via module :py:mod:`c1TIF`.
+Runs a thickness integrated debris-flow simulation via module :py:mod:`c1TIF`.
 
-Inputs:
+Choosing the execution workflow
+-------------------------------
 
-* ``DEM layer`` (required) - raster layer.
-* ``Release layer(s)`` (optional) - required only if the csv file has no x/y columns.
-* ``Time-dependent release values / release geometry`` (optional) - csv file; defines the release
-  geometry if it contains x/y columns.
+There are two ways to run ``c1TIF``:
 
-.. note::
+* **Script-based usage:** Prepare the input files in the DebrisFrame project folder structure
+  and run ``runC1TIF.py`` (see :ref:`moduleC1TIF:Input`). To generate the hydrograph-based starting condition
+  automatically, set ``inputHydrograph = True`` in ``c1TIFCfg.ini``. The ``in2DFHyd``
+  preprocessing step is then executed as part of the simulation.
+* **QGIS application:** Load or create the required input layers in the QGIS project and
+  select them in the ``c1TIF`` processing tool. The files do **not** need to be placed in
+  the separate input-folder structure used by the script-based workflow. When using a
+  hydrograph-based starting condition, first run ``in2DFHyd`` separately in QGIS, then
+  select its generated CSV file as the time-dependent release input for ``c1TIF``.
+  Keep ``inputHydrograph = False`` for this workflow to avoid triggering the automatic
+  preprocessing step again.
 
-    The ``initCondHyd.csv`` produced by the Hydrograph Starting Condition (in2DFHyd) tool can be
-    used here as the time-dependent release input.
+For the preparation of hydrograph input data, see :doc:`moduleIn2DFHyd` and :doc:`workflowIn2DFHyd`.
 
-* ``Secondary release layer`` (optional) - only one is allowed.
-* ``Entrainment layer`` (optional) - only one is allowed.
-* ``Resistance layer`` (optional) - only one is allowed.
-* ``Destination folder`` (required) - process directory.
-* ``Expert configuration file`` (advanced, optional) - ``c1TIFCfg.ini``. See
-  :ref:`moduleC1TIF:Model configuration`.
+1. Prepare the input data
+-----------------------
 
-Outputs:
+**Script-based usage:** c1TIF simulations are performed within a process directory, organized with the
+folder structure described in the `AvaFrame documentation <https://docs.avaframe.org/en/latest/moduleCom1DFA.html#input>`_.
+Regarding the release- and entrainment thickness settings we refer to the
+`respective AvaFrame section <https://docs.avaframe.org/en/latest/moduleCom1DFA.html#release-entrainment-thickness-settings>`_.
 
-* ``Output layer`` - simulation result.
+**QGIS application:** The separate folder structure is **not required**.
+Load the DEM and hydrograph directly into the QGIS workflow, and select
+the corresponding inputs in the ``c1TIF`` tool interface.
 
-Get default DebrisFrame module ini
--------------------
+2. Model configuration
+-----------------------
 
-Extracts the default configuration file for the selected DebrisFrame module. The file can then be
-edited and supplied as the expert configuration file when running the corresponding simulation tool.
+The model configuration is read from a configuration file: ``c1TIF/c1TIFCfg.ini``. In this file,
+all model parameters are listed and can be modified (see :doc:`moduleC1FIF`).
+These parameters overwrite the respective parameters of AvaFrame's ``com1DFACfg.ini``
+and DebrisFrame's ``in2DFHydCfg.ini`` configuration file.
+
+**Script-based usage:** We recommend to create a local copy
+and keep the default configuration in ``c1TIF/c1TIFCfg.ini`` untouched.
+For this purpose, in ``DebrisFrame/debrisframe/`` run:
+
+  ::
+
+    cp c1TIF/c1TIFCfg.ini c1TIF/local_c1TIFCfg.ini
+
+and modify the parameter values in there.
+
+**QGIS application:** The ``Get default module ini`` tool extracts the
+default configuration file for the selected DebrisFrame module. The file
+can then be edited and supplied as the expert configuration file
+when running the corresponding simulation tool.
 
 Inputs:
 
@@ -42,7 +67,15 @@ Outputs:
 * the written ini file.
 
 
-Relevant parameters
+3. Output data
+-----------------
+
+For script-based usage, the simulation results are saved to: *Outputs/com1DFA*.
+The description of the default and optional results are in the
+`AvaFrame documentation <https://docs.avaframe.org/en/latest/moduleCom1DFA.html#output>`_.
+For QGIS, the output layers are automatically loaded in the QGIS project.
+
+4. Relevant parameters
 -------------------
 
 Basically, the meaning of the single parameters in ``c1TIF/c1TIFCfg.ini`` is explained in the `AvaFrame <https://docs.avaframe.org/en/latest/index.html>`_ and
@@ -63,7 +96,7 @@ However, the following ones are especially relevant because they control the wor
   stopping (flow velocity = 0) are taken into account, the ground surface changes as well. In order to allow an `adaptive surface <https://docs.avaframe.org/en/latest/theoryCom1DFA.html#adaptive-surface>`_ during your simulation,
   following settings are recommended:
 
-    - ``adaptSfcStopped = 1`` (and ``explicitFriction = 1`` -> default = 0) - all particles with flow velocity = 0 are summed to the topography
+    - ``adaptSfcStopped = 1``- all particles with flow velocity = 0 are summed to the topography
     - ``adaptSfcEntrainment = 1`` - the topography changes according to entrainment
     - ``entrainableDeposition = True`` - flowing mass re-entrains already deposited or stopped material when it is flowing over it.
     - ``resType = demAdapted|sfcChange`` - get the adapted topography as a result|get the difference between the pre- and post-simulation topography as a result

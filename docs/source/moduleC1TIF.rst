@@ -22,6 +22,11 @@ to perform simulations for varying parameters all at once.
 .. Note::
    The configuration parameters are still under development.
 
+Theory
+--------
+The theory and numerics of the thickness integrated flow model can be found in the
+`AvaFrame documentation: com1DFA Theory <https://docs.avaframe.org/en/latest/theoryCom1DFA.html>`_.
+
 Input
 ---------
 
@@ -51,50 +56,15 @@ Additionally, the deposition can be erodible if `entrainableDeposition` is switc
 
 Model configuration
 --------------------
-The model configuration is read from a configuration file: ``c1TIF/c1TIFCfg.ini``. In this file,
-all model parameters are listed and can be modified. These parameters overwrite the respective parameters
-of AvaFrame's ``com1DFACfg.ini`` and DebrisFrame's ``in2DFHydCfg.ini`` configuration file. We recommend to create a local copy
-and keep the default configuration in ``c1TIF/c1TIFCfg.ini`` untouched.
-For this purpose, in ``DebrisFrame/debrisframe/`` run:
 
-  ::
-
-    cp c1TIF/c1TIFCfg.ini c1TIF/local_c1TIFCfg.ini
-
-and modify the parameter values in there.
-
-It is also possible to perform multiple simulations at once, with varying input parameters.
-
+see :doc:`workflowC1TIF`
 
 Output
 ---------
-The simulation results are saved to: *Outputs/com1DFA*.
-The description of the default and optional results are in the `AvaFrame documentation <https://docs.avaframe.org/en/latest/moduleCom1DFA.html#output>`_.
 
+see :doc:`workflowC1TIF`
 
 To run
 --------
 
-* first go to ``DebrisFrame/debrisframe``
-* copy ``debrisframeCfg.ini`` to ``local_debrisframeCfg.ini`` and set your desired process directory name
-* create a process directory with required input files
-* copy ``c1TIF/c1TIFCfg.ini`` to ``c1TIF/local_c1TIFCfg.ini`` and if desired change configuration settings
-
-* run:
-  ::
-
-    pixi run python runC1TIF.py
-
-Run from hydrograph
---------
-
-If in ``local_c1TIFCfg.ini`` ``inputHydrograph`` is set to ``True``, the :py:mod:`c1TIF` input data is computed from
-a hydrograph by executing the :ref:`moduleIn2DFHyd:in2DFHyd: Initial Hydraulic Conditions Module` module.
-From in2DFHyd :ref:`moduleIn2DFHyd:Output`, the resulting time dependent release (csv) file is copied into the
-``Inputs/REL`` directory for the :py:mod:`c1TIF` simulation.
-
-
-Theory
---------
-The theory and numerics of the thickness integrated flow model can be found in the
-`AvaFrame documentation: com1DFA Theory <https://docs.avaframe.org/en/latest/theoryCom1DFA.html>`_.
+see :doc:`workflowC1TIF`
