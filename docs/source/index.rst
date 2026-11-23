@@ -20,6 +20,7 @@ General
     * :doc:`introduction`
     * :doc:`installation`
     * :doc:`workflow`
+    * :doc:`connector`
     * :doc:`release`
 
 .. toctree::
@@ -30,6 +31,7 @@ General
    introduction.rst
    installation.rst
    workflow.rst
+   connector.rst
    release.rst
 
 

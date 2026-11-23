@@ -8,7 +8,7 @@ From PyPI
 
   pip install debrisframe
 
-This installs AvaFrame (``avaframe>=2.2b1``) as a dependency.
+This installs AvaFrame (``avaframe>=2.2``) as a dependency.
 
 From source
 ^^^^^^^^^^^
@@ -43,19 +43,18 @@ From QGIS
 
 DebrisFrame can be run from QGIS via the OpenNHMQGisConnector plugin. The plugin
 installs the required Python packages into QGIS's Python environment and adds
-the DebrisFrame modules in the QGIS Processing Toolbox.
+the DebrisFrame modules in the QGIS Processing Toolbox. The DebrisFrame tools only
+show up if the ``debrisframe`` package is actually installed in QGIS's Python
+environment.
 
-Install the connector from ZIP
-""""""""""""""""""""""""""""""""
+Install the connector
+"""""""""""""""""""""
 
-The connector version required for DebrisFrame is not available on
-`plugins.qgis.org <https://plugins.qgis.org>`_ yet and is distributed as a zip
-file instead.
+The connector is available from the official QGIS plugin repository
+(`plugins.qgis.org <https://plugins.qgis.org>`_).
 
-#. Get the ``OpenNHMQGisConnector.zip``.
-#. In QGIS, open ``Plugins > Manage and Install Plugins...`` and switch to the
-   ``Install from ZIP`` tab.
-#. Select the downloaded zip file and click ``Install Plugin``.
+#. In QGIS, open ``Plugins > Manage and Install Plugins...``.
+#. Search for ``OpenNHMQGisConnector`` in the ``All`` tab and click ``Install Plugin``.
 #. Make sure the plugin is enabled in the ``Installed`` tab.
 
 Install the DebrisFrame package
@@ -65,14 +64,13 @@ Install the DebrisFrame package
 #. Expand ``OpenNHM > Admin`` and run ``Install DebrisFrame``.
 
 The tool installs the ``debrisframe`` package from PyPI. DebrisFrame requires
-AvaFrame ``>= 2.2b1``. Since ``2.2b1`` is a pre-release, pip does not install it
-by default. The tool installs AvaFrame with the ``--pre`` flag. If an
-older AvaFrame is already installed, you are asked before it is replaced.
+AvaFrame ``>= 2.2``. If an older AvaFrame is already installed, you are asked
+before it is replaced.
 
-If you prefer to install AvaFrame 2.2b1 yourself, or if the installation via the
+If you prefer to install AvaFrame yourself, or if the installation via the
 tool fails, run::
 
-  python -m pip install --user --upgrade --pre avaframe
+  python -m pip install --user --upgrade avaframe
 
 On Windows, open the **OSGeo4W Shell** from the start menu and run the command there.
 If you have multiple QGIS versions installed, choose the OSGeo4W Shell that matches
@@ -84,7 +82,7 @@ Run a module
 """"""""""""
 
 After restarting QGIS, the DebrisFrame tools appear in the Processing Toolbox
-under ``DebrisFrame_Experimental``. See :ref:`workflow:Application via QGIS` for
-an overview of the available modules and how to run them.
+under ``DebrisFrame_Experimental``. See :doc:`connector` for an overview of the
+available tools and :ref:`workflow:Application via QGIS` for how to run them.
 
 
