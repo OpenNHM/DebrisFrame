@@ -19,7 +19,9 @@ General
 
     * :doc:`introduction`
     * :doc:`installation`
-    * :doc:`workflow`
+    * :doc:`scriptBasedUsage`
+    * :doc:`qgisUsage`
+    * :doc:`connector`
     * :doc:`release`
 
 .. toctree::
@@ -29,7 +31,9 @@ General
 
    introduction.rst
    installation.rst
-   workflow.rst
+   qgisUsage.rst
+   scriptBasedUsage.rst
+   connector.rst
    release.rst
 
 
@@ -55,14 +59,14 @@ Input modules
 
 .. only:: html
 
-    * :doc:`moduleIn2TopoHyd`
+    * :doc:`moduleIn2DFHyd`
 
 .. toctree::
    :maxdepth: 3
    :hidden:
    :caption: Input modules
 
-   moduleIn2TopoHyd.rst
+   moduleIn2DFHyd.rst
 
 
 Helper functions
@@ -79,6 +83,22 @@ Helper functions
 
    out1HelpDFHyd.rst
 
+
+Workflows
+=====================
+
+.. only:: html
+
+    * :doc:`workflowC1TIF`
+    * :doc:`workflowIn2DFHyd`
+
+.. toctree::
+   :maxdepth: 3
+   :hidden:
+   :caption: Workflows
+
+   workflowC1TIF.rst
+   workflowIn2DFHyd.rst
 
 Indices and tables
 ==================

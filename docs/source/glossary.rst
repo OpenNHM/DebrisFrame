@@ -10,6 +10,9 @@ Glossary
 .. glossary::
     :sorted:
 
+    cross section
+        Section perpendicular to the main direction of flow bounded by the free surface and wetted perimeter of the stream or channel.
+
     debris-flow hydrograph
         A debris-flow hydrograph (in German Murgangline) is the time series
         describing how the :term:`discharge` of a debris flow varies at a given cross-section.
@@ -30,3 +33,7 @@ Glossary
 
     hydrograph
         A hydrograph is the time series describing how the :term:`discharge` of water varies at a given cross-section.
+
+    levee points
+        Considering a channel :term:`cross section`, levee points define the left and right top of the channel embankment
+        which constrain the flow to the main channel.

@@ -1,4 +1,4 @@
-c1TIF: thickness integrated flow module
+c1TIF: Thickness integrated flow module
 =======================================
 
 :py:mod:`c1TIF` is a module for debris flow computations using thickness integration.
@@ -22,11 +22,16 @@ to perform simulations for varying parameters all at once.
 .. Note::
    The configuration parameters are still under development.
 
+Theory
+--------
+The theory and numerics of the thickness integrated flow model can be found in the
+`AvaFrame documentation: com1DFA Theory <https://docs.avaframe.org/en/latest/theoryCom1DFA.html>`_.
+
 Input
 ---------
 
-c1TIF simulations are performed within a process directory, organized with the
-folder structure described in the `AvaFrame documentation <https://docs.avaframe.org/en/latest/moduleCom1DFA.html#input>`_.
+The data required to execute the module are described in
+:doc:`workflowC1TIF`.
 Regarding the release- and entrainment thickness settings we refer to the
 `respective AvaFrame section <https://docs.avaframe.org/en/latest/moduleCom1DFA.html#release-entrainment-thickness-settings>`_.
 Note that option 3 (thickness set via time dependent release file) is the default setting in c1TIF.
@@ -43,58 +48,19 @@ Erosion, Deposition, adaptive topography
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 When `entrainment <https://docs.avaframe.org/en/latest/theoryCom1DFA.html#entrainment>`_,
 `detrainment <https://docs.avaframe.org/en/latest/theoryCom1DFA.html#detrainment>`_
-or stopping (flow velocity is zero) occurs and the respective flags `adaptSfcEntrainment`,
-`adaptSfcDetrainment` and `adaptSfcStopped` are switched on, the surface is adapted accordingly
+or stopping (flow velocity is zero) occurs and the respective flags ``adaptSfcEntrainment``,
+``adaptSfcDetrainment`` and ``adaptSfcStopped`` are switched on, the surface is adapted accordingly
 (see the `AvaFrame adaptive topography documentation <https://docs.avaframe.org/en/latest/theoryCom1DFA.html#adaptive-surface>`_).
-Additionally, the deposition can be erodible if `entrainableDeposition` is switched on.
-
-
-Model configuration
---------------------
-The model configuration is read from a configuration file: ``c1TIF/c1TIFCfg.ini``. In this file,
-all model parameters are listed and can be modified. These parameters overwrite the respective parameters
-of AvaFrame's ``com1DFACfg.ini`` and DebrisFrame's ``in2TopoHydCfg.ini`` configuration file. We recommend to create a local copy
-and keep the default configuration in ``c1TIF/c1TIFCfg.ini`` untouched.
-For this purpose, in ``DebrisFrame/debrisframe/`` run:
-
-  ::
-
-    cp c1TIF/c1TIFCfg.ini c1TIF/local_c1TIFCfg.ini
-
-and modify the parameter values in there.
-
-It is also possible to perform multiple simulations at once, with varying input parameters.
-
+Additionally, the deposition can be erodible if ``entrainableDeposition`` is switched on.
 
 Output
 ---------
-The simulation results are saved to: *Outputs/com1DFA*.
-The description of the default and optional results are in the `AvaFrame documentation <https://docs.avaframe.org/en/latest/moduleCom1DFA.html#output>`_.
 
+The description of the default and optional results are in the
+`AvaFrame documentation <https://docs.avaframe.org/en/latest/moduleCom1DFA.html#output>`_.
 
 To run
 --------
 
-* first go to ``DebrisFrame/debrisframe``
-* copy ``debrisframeCfg.ini`` to ``local_debrisframeCfg.ini`` and set your desired process directory name
-* create a process directory with required input files
-* copy ``c1TIF/c1TIFCfg.ini`` to ``c1TIF/local_c1TIFCfg.ini`` and if desired change configuration settings
-
-* run:
-  ::
-
-    pixi run python runC1TIF.py
-
-Run from hydrograph
---------
-
-If in ``local_c1TIFCfg.ini`` ``inputHydrograph`` is set to ``True``, the :py:mod:`c1TIF` input data is computed from
-a hydrograph by executing the :ref:`moduleIn2TopoHyd:in2TopoHyd: Initial Hydraulic Conditions Module` module.
-From in2TopoHyd :ref:`moduleIn2TopoHyd:Output`, the resulting time dependent release (csv) file is copied into the
-``Inputs/REL`` directory for the :py:mod:`c1TIF` simulation.
-
-
-Theory
---------
-The theory and numerics of the thickness integrated flow model can be found in the
-`AvaFrame documentation: com1DFA Theory <https://docs.avaframe.org/en/latest/theoryCom1DFA.html>`_.
+For the complete execution sequence see :doc:`workflowC1TIF`.
+See also :doc:`scriptBasedUsage` and :doc:`qgisUsage`.

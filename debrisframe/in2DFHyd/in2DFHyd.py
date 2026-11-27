@@ -20,7 +20,7 @@ import avaframe.in3Utils.fileHandlerUtils as fU
 import debrisframe.in1Utils.plotUtils as pltUtls
 
 # create local logger under avaframe namespace to use its logging configuration
-log = logging.getLogger("avaframe.debrisframe.in2TopoHyd")
+log = logging.getLogger("avaframe.debrisframe.in2DFHyd")
 
 
 def assignCrossSectionCoords(leveePoints, crossSection):
@@ -164,10 +164,10 @@ def computeSubArea(elevation, distance, surfElev, idLevee, wetCellIdx, idx):
     return subArea, dx
 
 
-def computeRatingCurve(crossSection, topoHydCfg):
+def computeRatingCurve(crossSection, inputHydCfg):
     """
     compute relation between flow area and flow thickness
-    in a given topographic cross section
+    at a given topographic cross section
 
     Parameters
     -----------
@@ -175,8 +175,8 @@ def computeRatingCurve(crossSection, topoHydCfg):
         dictionary containing x,y-coordinates of cross-section cells,
         the elevation of the cross-section cells,
         the path (distance) along the cross-section cells
-    topoHydCfg: configparser object
-        configuration settings for the in2TopoHyd-module
+    inputHydCfg: configparser object
+        configuration settings for the in2DFHyd-module
 
     Returns
     --------
@@ -195,7 +195,7 @@ def computeRatingCurve(crossSection, topoHydCfg):
     # horizontal distance between neighbouring cells
     distance = crossSection["s"]
     # get elevation steps
-    dElev = topoHydCfg["GENERAL"].getfloat("dElev")
+    dElev = inputHydCfg["GENERAL"].getfloat("dElev")
 
     # initialize lists
     thickness = []
@@ -239,7 +239,6 @@ def computeRatingCurve(crossSection, topoHydCfg):
         subXmax = []
         # iteration loop over subarrays
         for sub in idxSub:
-
             # np.trapz() only calculates the area between the vertices (cell centers)
             # if the thickness at the very left and the very right cell is still > 0,
             # there are remaining subareas on both sides that have to be considered
@@ -290,7 +289,7 @@ def computeRatingCurve(crossSection, topoHydCfg):
     return ratingCurve
 
 
-def computeParallelCrossSection(dem, crossSection, topoHydCfg):
+def computeParallelCrossSection(dem, crossSection, inputHydCfg):
     """
     Generates two parallel cross sections in a predefined normal distance
     on each side of the original release line and computes the mean
@@ -304,8 +303,8 @@ def computeParallelCrossSection(dem, crossSection, topoHydCfg):
         dictionary containing
         x,y-coordinates of cross-section cells
         indices of cross-section cells along dem-raster
-    topoHydCfg: configparser object
-        configuration settings for the in2TopoHyd-module
+    inputHydCfg: configparser object
+        configuration settings for the in2DFHyd-module
 
     Returns
     --------
@@ -326,7 +325,7 @@ def computeParallelCrossSection(dem, crossSection, topoHydCfg):
     # get cell size of dem
     csz = dem["header"]["cellsize"]
     # get normal distance to release line
-    normalDist = topoHydCfg["GENERAL"].get("normalDist", fallback="")
+    normalDist = inputHydCfg["GENERAL"].get("normalDist", fallback="")
 
     # get direction of cross section
     dx = xcoordEnd - xcoordStart
@@ -353,8 +352,14 @@ def computeParallelCrossSection(dem, crossSection, topoHydCfg):
     xcoordEnd2 = xcoordEnd + normalDist * nx2
     ycoordEnd2 = ycoordEnd + normalDist * ny2
     # save results in a dictionary
-    coord1 = {"x": np.array([xcoordStart1, xcoordEnd1]), "y": np.array([ycoordStart1, ycoordEnd1])}
-    coord2 = {"x": np.array([xcoordStart2, xcoordEnd2]), "y": np.array([ycoordStart2, ycoordEnd2])}
+    coord1 = {
+        "x": np.array([xcoordStart1, xcoordEnd1]),
+        "y": np.array([ycoordStart1, ycoordEnd1]),
+    }
+    coord2 = {
+        "x": np.array([xcoordStart2, xcoordEnd2]),
+        "y": np.array([ycoordStart2, ycoordEnd2]),
+    }
     # get elevation for new cross sections
     crossSect1 = getCrossSectionCells(dem, coord1)
     crossSect2 = getCrossSectionCells(dem, coord2)
@@ -371,7 +376,7 @@ def computeParallelCrossSection(dem, crossSection, topoHydCfg):
     return meanElev1, meanElev2, normalDist, unitNormVec1, unitNormVec2
 
 
-def computeSlopeAlongChannel(dem, crossSection, topoHydCfg):
+def computeSlopeAlongChannel(dem, crossSection, inputHydCfg):
     """
     Computation of the slope of every DEM cell along the release line
     between levee points
@@ -384,8 +389,8 @@ def computeSlopeAlongChannel(dem, crossSection, topoHydCfg):
         dictionary containing
         x,y-coordinates of cross-section cells
         indices of cross-section cells along dem-raster
-    topoHydCfg: configparser object
-        configuration settings for the in2TopoHyd-module
+    inputHydCfg: configparser object
+        configuration settings for the in2DFHyd-module
 
     Returns
     --------
@@ -394,14 +399,14 @@ def computeSlopeAlongChannel(dem, crossSection, topoHydCfg):
     """
 
     # get up-/downstream elevations and distance between auxiliary cross sections
-    meanElev1, meanElev2, normalDist, *_ = computeParallelCrossSection(dem, crossSection, topoHydCfg)
+    meanElev1, meanElev2, normalDist, *_ = computeParallelCrossSection(dem, crossSection, inputHydCfg)
     # get slope as central difference
     slope = abs((meanElev1 - meanElev2) / (2 * normalDist))
 
     return slope
 
 
-def computeRelFlowThVel(discharge, topoHydCfg, ratingCurve, dem, crossSection):
+def computeRelFlowThVel(discharge, inputHydCfg, ratingCurve, dem, crossSection):
     """
     For a given discharge this function computes flow thickness (starting from the lowest point)
     and the mean velocity at a certain cross section.
@@ -411,8 +416,8 @@ def computeRelFlowThVel(discharge, topoHydCfg, ratingCurve, dem, crossSection):
     -----------
     discharge: 1D-array
         discharge value
-    topoHydCfg: configparser object
-        configuration settings for the in2TopoHyd-module
+    inputHydCfg: configparser object
+        configuration settings for the in2DFHyd-module
     ratingCurve: dict
         dictionary containing
         thickness values and corresponding flow area
@@ -429,8 +434,8 @@ def computeRelFlowThVel(discharge, topoHydCfg, ratingCurve, dem, crossSection):
         flow velocity
     """
 
-    slope = topoHydCfg["GENERAL"].get("slope", fallback="")
-    velType = topoHydCfg["GENERAL"].get("velType", fallback="rickenmann")
+    slope = inputHydCfg["GENERAL"].get("slope", fallback="")
+    velType = inputHydCfg["GENERAL"].get("velType", fallback="rickenmann")
 
     if velType == "":
         message = "velType not defined!"
@@ -445,7 +450,7 @@ def computeRelFlowThVel(discharge, topoHydCfg, ratingCurve, dem, crossSection):
 
     # definition of the average slope of the cross section in flow direction
     if slope == "":
-        slope = computeSlopeAlongChannel(dem, crossSection, topoHydCfg)
+        slope = computeSlopeAlongChannel(dem, crossSection, inputHydCfg)
     else:
         slope = float(slope)
 
@@ -614,7 +619,7 @@ def getDEMRaster(debrisDir, debrisCfg):
     return dem
 
 
-def getFlowDirection(crossSection, dem, topoHydCfg):
+def getFlowDirection(crossSection, dem, inputHydCfg):
     """
     This function computes the flow direction.
     Normal to the cross section.
@@ -627,8 +632,8 @@ def getFlowDirection(crossSection, dem, topoHydCfg):
         the path (distance) along the cross-section cells
     dem: dict
         elevation raster data
-    topoHydCfg: configparser object
-        configuration settings for the in2TopoHyd-module
+    inputHydCfg: configparser object
+        configuration settings for the in2DFHyd-module
 
     Returns
     --------
@@ -639,7 +644,7 @@ def getFlowDirection(crossSection, dem, topoHydCfg):
 
     # get up-/downstream elevations and distance between auxiliary cross sections
     meanElev1, meanElev2, _, unitNormVec1, unitNormVec2 = computeParallelCrossSection(
-        dem, crossSection, topoHydCfg
+        dem, crossSection, inputHydCfg
     )
     # get flow direction in x-y-plane
     if meanElev1 > meanElev2:
@@ -766,7 +771,7 @@ def getInputShapeFiles(inputDir, folder, fileType, dem, idField=None):
         raise ValueError(message)
 
     lenFeature = np.array(shapeFile["Length"])
-    if fileType.lower() not in ["release line", "levee points"] and not all(lenFeature  == 2):
+    if fileType.lower() not in ["release line", "levee points"] and not all(lenFeature == 2):
         message = f"{fileType} consists of more/less than 2 points! Only starting and ending point allowed!"
         log.error(message)
         raise ValueError(message)
@@ -894,7 +899,7 @@ def assignToWetCell(crossSection, dem, ratingCurve, releaseThickness, releaseVol
     return wetCells
 
 
-def in2TopoHydMain(debrisDir, topoHydCfg, debrisCfg):
+def in2DFHydMain(debrisDir, inputHydCfg, debrisCfg):
     """
     Main script to get the initial conditions for a release line as a csv-file
 
@@ -902,8 +907,8 @@ def in2TopoHydMain(debrisDir, topoHydCfg, debrisCfg):
     -----------
     debrisDir: str or pathlib path
         path to debris-flow directory
-    topoHydCfg: configparser.ConfigParser
-        configuration file for the in2TopoHyd-module
+    inputHydCfg: configparser.ConfigParser
+        configuration file for the in2DFHyd-module
     debrisCfg: configparser.ConfigParser
             configuration file for the c1TIF-module
 
@@ -919,7 +924,7 @@ def in2TopoHydMain(debrisDir, topoHydCfg, debrisCfg):
     # initProj.cleanSingleAvaDir(debrisDir, deleteOutput=False)
 
     # create output directory
-    outputDir = pathlib.Path(debrisDir, "Outputs", "in2TopoHyd")
+    outputDir = pathlib.Path(debrisDir, "Outputs", "in2DFHyd")
     fU.makeADir(outputDir)
 
     # +++ 1. read input data
@@ -931,10 +936,18 @@ def in2TopoHydMain(debrisDir, topoHydCfg, debrisCfg):
     # get release line and levee points
     inputDir = pathlib.Path(debrisDir, "Inputs")
     releaseLine = getInputShapeFiles(
-        inputDir=inputDir, folder="XSECT", fileType="Release line", dem=dem, idField=None
+        inputDir=inputDir,
+        folder="XSECT",
+        fileType="Release line",
+        dem=dem,
+        idField=None,
     )
     leveePoints = getInputShapeFiles(
-        inputDir=inputDir, folder="LEVEE", fileType="Levee points", dem=dem, idField=None
+        inputDir=inputDir,
+        folder="LEVEE",
+        fileType="Levee points",
+        dem=dem,
+        idField=None,
     )
     # output files are named after the release-line shapefile in Inputs/XSECT
     outputName = releaseLine["fname"].stem
@@ -951,9 +964,13 @@ def in2TopoHydMain(debrisDir, topoHydCfg, debrisCfg):
     crossSection = assignCrossSectionCoords(leveePoints, crossSection)
 
     # export cross section cell centers as points for plausibility check
-    if topoHydCfg["EXPORTS"].getboolean("exportCrossSectionCells"):
+    if inputHydCfg["EXPORTS"].getboolean("exportCrossSectionCells"):
         file = pd.DataFrame(
-            {"x": crossSection["x"], "y": crossSection["y"], "elev": crossSection["elevation"]}
+            {
+                "x": crossSection["x"],
+                "y": crossSection["y"],
+                "elev": crossSection["elevation"],
+            }
         )
         path = outputDir / f"{outputName}_crossSectionCells.csv"
         file.to_csv(path, sep=",", decimal=".", header=True, index=False)
@@ -964,11 +981,14 @@ def in2TopoHydMain(debrisDir, topoHydCfg, debrisCfg):
     log.info("Calculate hydraulic boundary conditions")
 
     # compute rating curve
-    ratingCurve = computeRatingCurve(crossSection, topoHydCfg)
+    ratingCurve = computeRatingCurve(crossSection, inputHydCfg)
 
     # plot cross section and rating curve for plausibility check
     pltUtls.plotRatingCurve(
-        ratingCurve=ratingCurve, crossSection=crossSection, outputDir=outputDir, outputName=outputName
+        ratingCurve=ratingCurve,
+        crossSection=crossSection,
+        outputDir=outputDir,
+        outputName=outputName,
     )
 
     # get hydrograph data
@@ -976,7 +996,11 @@ def in2TopoHydMain(debrisDir, topoHydCfg, debrisCfg):
 
     # get release flow thicknesses and velocities
     relTh, vel = computeRelFlowThVel(
-        hydrograph["discharge"], topoHydCfg, ratingCurve=ratingCurve, dem=dem, crossSection=crossSection
+        hydrograph["discharge"],
+        inputHydCfg,
+        ratingCurve=ratingCurve,
+        dem=dem,
+        crossSection=crossSection,
     )
 
     # distribute flow thickness and release volume over wetted cells
@@ -987,7 +1011,7 @@ def in2TopoHydMain(debrisDir, topoHydCfg, debrisCfg):
 
     # normal to release line
     # Vx, Vy, Vz -> vel magnitude multiplied by unit vector of direction
-    flwDirection = getFlowDirection(crossSection=crossSection, dem=dem, topoHydCfg=topoHydCfg)
+    flwDirection = getFlowDirection(crossSection=crossSection, dem=dem, inputHydCfg=inputHydCfg)
     vx = np.round(vel * flwDirection[0], decimals=2)
     vy = np.round(vel * flwDirection[1], decimals=2)
     vz = np.round(vel * flwDirection[2], decimals=2)
