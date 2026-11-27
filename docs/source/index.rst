@@ -21,6 +21,7 @@ General
     * :doc:`installation`
     * :doc:`scriptBasedUsage`
     * :doc:`standardUsage`
+    * :doc:`connector`
     * :doc:`release`
 
 .. toctree::
@@ -32,6 +33,7 @@ General
    installation.rst
    scriptBasedUsage.rst
    standardUsage.rst
+   connector.rst
    release.rst
 
 
