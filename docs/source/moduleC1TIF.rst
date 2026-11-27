@@ -48,10 +48,10 @@ Erosion, Deposition, adaptive topography
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 When `entrainment <https://docs.avaframe.org/en/latest/theoryCom1DFA.html#entrainment>`_,
 `detrainment <https://docs.avaframe.org/en/latest/theoryCom1DFA.html#detrainment>`_
-or stopping (flow velocity is zero) occurs and the respective flags `adaptSfcEntrainment`,
-`adaptSfcDetrainment` and `adaptSfcStopped` are switched on, the surface is adapted accordingly
+or stopping (flow velocity is zero) occurs and the respective flags ``adaptSfcEntrainment``,
+``adaptSfcDetrainment`` and ``adaptSfcStopped`` are switched on, the surface is adapted accordingly
 (see the `AvaFrame adaptive topography documentation <https://docs.avaframe.org/en/latest/theoryCom1DFA.html#adaptive-surface>`_).
-Additionally, the deposition can be erodible if `entrainableDeposition` is switched on.
+Additionally, the deposition can be erodible if ``entrainableDeposition`` is switched on.
 
 Output
 ---------
@@ -62,13 +62,13 @@ The description of the default and optional results are in the
 To run
 --------
 
-For the complete execution sequence and differences between the two routes,
+For the complete execution sequence and differences between the two workflow options,
 see :doc:`workflowC1TIF`:
 
 * **Script-based:** run ``runC1TIF.py`` with the process-directory inputs.
   Setting ``inputHydrograph = True`` enables automatic ``in2DFHyd`` preprocessing.
 * **QGIS:** select inputs in the ``Thickness integrated flow (c1)`` tool. For
   hydrograph-derived conditions, run the ``Hydrograph Starting Condition (in2DFHyd)`` QGIS tool first and pass
-  its CSV to c1TIF while keeping ``inputHydrograph = False``.
+  its CSV to c1TIF.
 
 See also :doc:`scriptBasedUsage` and :doc:`qgisConnector`.

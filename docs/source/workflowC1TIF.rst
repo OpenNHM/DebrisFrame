@@ -1,7 +1,8 @@
 Workflow: c1TIF
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Runs a thickness integrated debris-flow simulation via module :py:mod:`c1TIF`.
+Runs a thickness integrated debris-flow simulation via module :py:mod:`c1TIF`
+with a debris-flow hydrograph starting condition.
 
 Choosing the execution workflow
 -------------------------------
@@ -10,15 +11,13 @@ There are two ways to run ``c1TIF``:
 
 * **Script-based usage:** Prepare the input files in the DebrisFrame project  `folder structure <https://docs.avaframe.org/en/latest/moduleCom1DFA.html#input>`_
   and run ``runC1TIF.py``. To generate the hydrograph-based starting condition
-  automatically, set ``inputHydrograph = True`` in ``c1TIFCfg.ini``. The ``in2DFHyd``
+  automatically, set ``inputHydrograph = True`` in ``local_c1TIFCfg.ini``. The ``in2DFHyd``
   preprocessing step is then executed as part of the simulation.
 * **QGIS application:** Load or create the required input layers in the QGIS project and
   select them in the ``Thickness integrated flow (c1)`` processing tool. The files do **not** need to be placed in
   the separate input-folder structure used by the script-based workflow. When using a
   hydrograph-based starting condition, first run ``Hydrograph Starting Condition (in2DFHyd)`` separately in QGIS, then
   select its generated CSV file as the time-dependent release input for ``Thickness integrated flow (c1)``.
-  Keep ``inputHydrograph = False`` for this workflow to avoid triggering the automatic
-  preprocessing step again.
 
 For the preparation of hydrograph input data, see :doc:`workflowIn2DFHyd`.
 
@@ -28,7 +27,7 @@ Input data
 Between the following inputs can be selected:
 
 * ``DEM layer`` (required) - raster layer.
-* ``Release layer(s)`` (optional) - required only if the csv file has no x/y columns.
+* ``Release layer(s)`` (optional) - required only if the csv file has no x/y columns or if ``timeDependentRelease = False``.
 * ``Time-dependent release values / release geometry`` (optional) - csv file; defines the release
   geometry if it contains x/y columns.
 
@@ -42,7 +41,7 @@ Between the following inputs can be selected:
 * ``Resistance layer`` (optional) - only one is allowed.
 * ``Destination folder`` (optional) - process directory.
 * ``Expert configuration file`` (advanced, optional) - ``c1TIFCfg.ini``. See
-  :ref:`moduleC1TIF:Model configuration`.
+`AvaFrame documentation <https://docs.avaframe.org/en/latest/advancedUsage.html#via-the-cfgs-directory>`_.
 
 Model configuration
 -----------------------
@@ -88,7 +87,7 @@ Relevant parameters
 
 Basically, the meaning of the single parameters in ``c1TIF/c1TIFCfg.ini`` is explained in the `AvaFrame <https://docs.avaframe.org/en/latest/index.html>`_ and
 this documentation.
-However, the following ones are especially relevant because they control the workflow for :py:mod:`c1TIF`.
+However, the following are especially relevant because they control the workflow for :py:mod:`c1TIF`.
 
 * **Script-based usage:** To select the hydrograph starting condition for :py:mod:`c1TIF`,
   set ``inputHydrograph = True`` (with ``timeDependentRelease = True``, the default).
@@ -99,7 +98,8 @@ However, the following ones are especially relevant because they control the wor
   time-dependent release input of ``c1TIF``. Keep ``inputHydrograph = False``; the
   hydrograph preprocessing must not be started automatically in this workflow.
 * If ``timeDependentRelease = False``, the starting condition is instead calculated from
-  a `release area <https://docs.avaframe.org/en/latest/moduleCom1DFA.html#input>`_.
+  a `release area <https://docs.avaframe.org/en/latest/moduleCom1DFA.html#input>`_ and
+  a constant thickness released at timestep 0 (see `AvaFrame docu <https://docs.avaframe.org/en/latest/moduleCom1DFA.html#release-entrainment-thickness-settings>`_).
 
 
 * The mesh resolution for the simulation can be specified using ``meshCellSize`` (default: 2 m).

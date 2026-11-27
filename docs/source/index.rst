@@ -20,7 +20,7 @@ General
     * :doc:`introduction`
     * :doc:`installation`
     * :doc:`scriptBasedUsage`
-    * :doc:`qgisConnector`
+    * :doc:`standardUsage`
     * :doc:`release`
 
 .. toctree::
@@ -31,7 +31,7 @@ General
    introduction.rst
    installation.rst
    scriptBasedUsage.rst
-   qgisConnector.rst
+   standardUsage.rst
    release.rst
 
 
