@@ -10,7 +10,7 @@ calculate hydraulic initial conditions for a debris-flow simulation with
 * **Script-based usage:** Run ``in2DFHyd`` separately, or let ``runC1TIF.py``
   trigger hydraulic preprocessing automatically (``inputHydrograph = True``).
   Follow :ref:`in2dfhyd-script-workflow`.
-* **QGIS application:** Run ``Hydrograph Starting Condition (in2DFHyd)`` first
+* **QGIS usage:** Run ``Hydrograph Starting Condition (in2DFHyd)`` first
   and then ``Thickness integrated flow (c1)`` as two separate QGIS operations.
   Provide the generated CSV file to ``c1``
   manually and keep ``inputHydrograph = False``. Follow
@@ -51,7 +51,7 @@ following structure::
 The ``HYDR``, ``LEVEE`` and ``XSECT`` directories contain the discharge
 hydrograph, the levee points and the cross section line, respectively.
 
-**QGIS application:** This separate folder structure is **not required**.
+**QGIS usage:** This separate folder structure is **not required**.
 Load the DEM and hydrograph directly into the QGIS workflow, and load or
 create the cross section line and levee-point layers in your QGIS project.
 Select the corresponding inputs in the ``Hydrograph Starting Condition (in2DFHyd)`` tool interface.
@@ -99,7 +99,7 @@ The cross section line defines the terrain cross section at which the hydrograph
 is applied as a boundary condition.
 
 In QGIS, create a **line shapefile** layer. For script-based usage, save it
-as ``Inputs/XSECT/<crossSectionLineName>.shp``; for the QGIS application,
+as ``Inputs/XSECT/<crossSectionLineName>.shp``; for the QGIS usage,
 use the layer directly in the tool interface. Use the same coordinate reference
 system (CRS) as the DEM. Draw the line across the channel, perpendicular to
 the expected flow direction. The line must have **exactly two vertices**: a
@@ -125,7 +125,7 @@ The discharge prescribed by the hydrograph is initialized only between these
 points.
 
 Create a **point shapefile** layer in QGIS. For script-based usage, save it
-as ``Inputs/LEVEE/<leveePointsName>.shp``; for the QGIS application, use
+as ``Inputs/LEVEE/<leveePointsName>.shp``; for the QGIS usage, use
 the layer directly in the tool interface.
 Use the same CRS as the DEM and the cross section line. The shapefile must contain
 **exactly two points**, one on each side of the channel.
@@ -167,10 +167,15 @@ the QGIS connector. There are two options:
 
 **Option A — Run hydraulic preprocessing separately**
 
+#. First change the directory to ``DebrisFrame/debrisframe``
 #. Prepare the input files as described in Section 1.
-#. Configure ``local_in2DFHydCfg.ini`` for the project (optional).
-#. Execute ``runIn2DFHyd.py`` to generate the hydraulic initial conditions.
-   See :ref:`moduleIn2DFHyd:To run` and :doc:`scriptBasedUsage`.
+#. Copy ``in2DFHyd/in2DFHydCfg.ini`` to ``in2DFHyd/local_in2DFHydCfg.ini`` and, if desired, change the configuration settings (optional).
+#. To generate the hydraulic initial conditions.run:
+    ::
+
+     pixi run python runIn2DFHyd.py
+
+   See also :doc:`scriptBasedUsage`.
 #. Check the generated files as described in Section 4.
 #. When subsequently running ``c1TIF`` separately, ensure that the generated
    initial-condition CSV is provided as its time-dependent release input
@@ -178,8 +183,8 @@ the QGIS connector. There are two options:
 
 **Option B — Start hydraulic preprocessing automatically from c1TIF**
 
-#. Prepare the same input files as described in Section 1.
-#. Set ``inputHydrograph = True`` in ``c1TIFCfg.ini``.
+#. Change the directory and prepare the same input files as described in Section 1.
+#. Copy ``in2DFHyd/in2DFHydCfg.ini`` to ``in2DFHyd/local_in2DFHydCfg.ini`` and set ``inputHydrograph = True`` in ``c1TIFCfg.ini``.
 #. Execute ``runC1TIF.py``. The ``c1TIF`` workflow starts ``in2DFHyd``
    preprocessing before the simulation; see
    :ref:`moduleC1TIF:Run from hydrograph` and :doc:`scriptBasedUsage`.
@@ -193,17 +198,17 @@ the QGIS connector. There are two options:
 
 .. _in2dfhyd-qgis-workflow:
 
-3. QGIS application
+3. QGIS usage
 -------------------
 
 Use this section when running the modules through the **QGIS connector**.
 Unlike script-based Option B, the hydraulic preprocessing and simulation
 must be started **separately and in this order** in the documented version.
-See :doc:`qgisConnector` for general connector instructions.
+See :doc:`connector` for general connector instructions.
 
 #. Prepare the DEM, hydrograph, cross section line and levee points as in
    Section 1.
-#. Run the **in2DFHyd** tool in QGIS to generate the hydraulic initial
+#. Run the **Hydrograph Starting Condition (in2DFHyd)** tool in QGIS to generate the hydraulic initial
    conditions.
 #. Check the ``in2DFHyd`` output CSV and plots (Section 4).
 #. Open the **c1** tool in QGIS. Select
@@ -220,7 +225,7 @@ See :doc:`qgisConnector` for general connector instructions.
 
 .. _in2dfhyd-outputs:
 
-4. Check the output data (both workflows)
+4. Check the output data
 ------------------------
 
 The ``in2DFHyd`` outputs are organized as follows::
@@ -264,7 +269,7 @@ If preprocessing or the subsequent simulation fails, check the following:
 
 * **Script-based usage:** Are the project directory and the ``Inputs/HYDR``, ``Inputs/LEVEE`` and
   ``Inputs/XSECT`` subdirectories named correctly?
-* **QGIS application:** Are all required input files or layers loaded or
+* **QGIS usage:** Are all required input files or layers loaded or
   created in the QGIS project and selected in the tool interface?
 * Do the DEM, cross section line and levee points use the same CRS?
 * Does the cross section line contain exactly two vertices and run across the
@@ -276,7 +281,7 @@ If preprocessing or the subsequent simulation fails, check the following:
 * Are the output plots plausible? They may explain error messages.
 * **Script-based integrated preprocessing:** Is ``inputHydrograph = True``
   set in ``c1TIFCfg.ini``?
-* **QGIS application:** Was ``in2DFHyd`` run first, is
+* **QGIS usage:** Was ``in2DFHyd`` run first, is
   ``inputHydrograph = False``, and was the generated CSV explicitly selected
   as the time-dependent release input for ``c1TIF``?
 * **Separate script-based runs:** Is the generated initial-condition CSV

@@ -62,13 +62,5 @@ The description of the default and optional results are in the
 To run
 --------
 
-For the complete execution sequence and differences between the two workflow options,
-see :doc:`workflowC1TIF`:
-
-* **Script-based:** run ``runC1TIF.py`` with the process-directory inputs.
-  Setting ``inputHydrograph = True`` enables automatic ``in2DFHyd`` preprocessing.
-* **QGIS:** select inputs in the ``Thickness integrated flow (c1)`` tool. For
-  hydrograph-derived conditions, run the ``Hydrograph Starting Condition (in2DFHyd)`` QGIS tool first and pass
-  its CSV to c1TIF.
-
-See also :doc:`scriptBasedUsage` and :doc:`qgisConnector`.
+For the complete execution sequence see :doc:`workflowC1TIF`.
+See also :doc:`scriptBasedUsage` and :doc:`qgisUsage`.

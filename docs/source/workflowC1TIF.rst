@@ -13,7 +13,7 @@ There are two ways to run ``c1TIF``:
   and run ``runC1TIF.py``. To generate the hydrograph-based starting condition
   automatically, set ``inputHydrograph = True`` in ``local_c1TIFCfg.ini``. The ``in2DFHyd``
   preprocessing step is then executed as part of the simulation.
-* **QGIS application:** Load or create the required input layers in the QGIS project and
+* **QGIS usage:** Load or create the required input layers in the QGIS project and
   select them in the ``Thickness integrated flow (c1)`` processing tool. The files do **not** need to be placed in
   the separate input-folder structure used by the script-based workflow. When using a
   hydrograph-based starting condition, first run ``Hydrograph Starting Condition (in2DFHyd)`` separately in QGIS, then
@@ -59,7 +59,7 @@ For this purpose, in ``DebrisFrame/debrisframe/`` run:::
 
 and modify the parameter values in there.
 
-**QGIS application:** The ``Get default module ini`` tool extracts the
+**QGIS usage:** The ``Get default module ini`` tool extracts the
 default configuration file for the selected DebrisFrame module. The file
 can then be edited and supplied as the expert configuration file
 when running the corresponding simulation tool.
@@ -94,7 +94,7 @@ However, the following are especially relevant because they control the workflow
   This calls ``in2DFHyd`` to compute the starting condition automatically.
   The section ``[in2DFHyd_in2DFHyd_override]`` of the configuration file contains
   the module-specific parameters. For details, see :ref:`moduleIn2DFHyd:Model configuration`.
-* **QGIS application:** Run ``in2DFHyd`` separately and supply its output CSV file as the
+* **QGIS usage:** Run ``in2DFHyd`` separately and supply its output CSV file as the
   time-dependent release input of ``c1TIF``. Keep ``inputHydrograph = False``; the
   hydrograph preprocessing must not be started automatically in this workflow.
 * If ``timeDependentRelease = False``, the starting condition is instead calculated from

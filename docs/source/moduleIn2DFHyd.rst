@@ -183,8 +183,8 @@ as shown below::
           <crossSectionName>_ratingCurve.png
       Work/
 
-The folder structure described above is only required for script-based usage.
-For **QGIS**, load or create the DEM, hydrograph, cross-section line and levee
+
+For **QGIS usage**, load or create the DEM, hydrograph, cross-section line and levee
 points in the QGIS project and select them in the in2DFHyd processing tool;
 these inputs need not be placed in the fixed ``Inputs`` subdirectories.
 QGIS still requires a destination folder for the results. For both workflows,
@@ -307,30 +307,9 @@ These plots are intended to help verify the geometric and hydraulic calculations
 To run
 -------
 
-* For **script-based usage**
-
-  *  first change the directory to ``DebrisFrame/debrisframe``
-
-  * copy ``debrisframeCfg.ini`` to ``local_debrisframeCfg.ini`` and set your desired process directory name
-
-  * create a process directory with the required DEM, release line, levee points and hydrograph
-
-  * copy ``in2DFHyd/in2DFHydCfg.ini`` to ``in2DFHyd/local_in2DFHydCfg.ini`` and, if desired, change the configuration settings
-
-  * run:
-    ::
-
-     pixi run python runIn2DFHyd.py
-
-* **For QGIS**
-  use the **Hydrograph Starting Condition (in2DFHyd)** processing
-  tool instead of the Python command. To continue with c1TIF, select the
-  generated CSV within the in2DFHyd destination directory in the **Thickness integrated flow (c1)** tool.
-  See :doc:`qgisConnector` and :doc:`workflowIn2DFHyd`.
-
 The complete preprocessing workflow reads the DEM and release information,
 generates the release cross section, calculates the rating curve, derives the
 hydraulic conditions from the discharge hydrograph and writes the results which serves as c1TIF initial
 conditions to ``Outputs/in2DFHyd/<crossSectionName>.csv``.
 
-To run the module from :mod:`c1TIF`, follow the instructions in :doc:`workflowC1TIF`
+To run the module, follow the instructions in :doc:`workflowC1TIF`, :doc:`workflowIn2DFHyd`

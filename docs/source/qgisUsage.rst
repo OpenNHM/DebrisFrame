@@ -1,4 +1,4 @@
-Standard Usage (QGIS)
+QGIS usage
 ---------------------
 
 Install the QGIS connector and DebrisFrame as described in
@@ -8,6 +8,7 @@ about the QGIS connector is described in the `AvaFrame documentation <https://do
 
 Each tool corresponds to a DebrisFrame module and exposes its inputs and outputs
 as QGIS processing parameters. All tools are described on the :doc:`connector` page.
+
 Input layers can be loaded or created in the QGIS project. For step-by-step instructions
 see :doc:`workflowIn2DFHyd` and :doc:`workflowC1TIF`. For module theory and parameters see
 :doc:`moduleIn2DFHyd` and :doc:`moduleC1TIF`. For script execution see

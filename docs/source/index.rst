@@ -20,7 +20,7 @@ General
     * :doc:`introduction`
     * :doc:`installation`
     * :doc:`scriptBasedUsage`
-    * :doc:`standardUsage`
+    * :doc:`qgisUsage`
     * :doc:`connector`
     * :doc:`release`
 
@@ -31,8 +31,8 @@ General
 
    introduction.rst
    installation.rst
+   qgisUsage.rst
    scriptBasedUsage.rst
-   standardUsage.rst
    connector.rst
    release.rst
 
